@@ -23,7 +23,7 @@ public abstract class GlobalUserController {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    private ErrorDTO exceptionHandler1(Exception ex){
+    private ErrorDTO exceptionHandler1(Exception ex) {
         ErrorDTO dto = new ErrorDTO();
         dto.setMessage(ex.getMessage());
         dto.setStatusCode(HttpStatus.NOT_FOUND.value());
@@ -33,7 +33,7 @@ public abstract class GlobalUserController {
 
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    private ErrorDTO exceptionHandler2(Exception ex){
+    private ErrorDTO exceptionHandler2(Exception ex) {
         ErrorDTO dto = new ErrorDTO();
         dto.setMessage(ex.getMessage());
         dto.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -43,7 +43,7 @@ public abstract class GlobalUserController {
 
     @ExceptionHandler(UnauthorizedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    private ErrorDTO exceptionHandler3(Exception ex){
+    private ErrorDTO exceptionHandler3(Exception ex) {
         ErrorDTO dto = new ErrorDTO();
         dto.setMessage(ex.getMessage());
         dto.setStatusCode(HttpStatus.UNAUTHORIZED.value());
@@ -53,7 +53,7 @@ public abstract class GlobalUserController {
 
     @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    private ErrorDTO exceptionHandler4(Exception ex){
+    private ErrorDTO exceptionHandler4(Exception ex) {
         ErrorDTO dto = new ErrorDTO();
         dto.setMessage(ex.getMessage());
         dto.setStatusCode(HttpStatus.FORBIDDEN.value());
@@ -63,7 +63,7 @@ public abstract class GlobalUserController {
 
     @ExceptionHandler(MethodNotAllowedException.class)
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
-    private ErrorDTO exceptionHandler5(Exception ex){
+    private ErrorDTO exceptionHandler5(Exception ex) {
         ErrorDTO dto = new ErrorDTO();
         dto.setMessage(ex.getMessage());
         dto.setStatusCode(HttpStatus.METHOD_NOT_ALLOWED.value());

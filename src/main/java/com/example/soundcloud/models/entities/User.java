@@ -40,10 +40,12 @@ public class User {
     @Column
     private String lastName;
     @Column
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @Column
     private String gender;
     @Column
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastLogin;
     @Column
     private String address;

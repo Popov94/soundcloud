@@ -1,18 +1,13 @@
-package com.example.soundcloud.models.dto;
+package com.example.soundcloud.models.dto.user;
 
-import com.sun.istack.NotNull;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.persistence.Transient;
 import java.time.LocalDateTime;
 
 @Data
-public class UserFullDTO {
+public class UserWithoutPDTO {
 
     private long id;
     private String username;
@@ -20,8 +15,10 @@ public class UserFullDTO {
     private String dateOfBirthday;
     private String firstName;
     private String lastName;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     private String gender;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastLogin;
     private String address;
     private String city;
