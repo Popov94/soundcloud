@@ -1,18 +1,18 @@
 package com.example.soundcloud.models.dto.song;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDate;
-
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class RequestSongFilterDTO {
     private String title;
     private String genre;
-    private LocalDate dateOfUpload;
-    private int listened;
-    private int likes;
-    private int dislikes;
-    private int comments;
-    private String uploader;
-
+    private String filterBy;
+    private String orderBy;
+    private int page;
+//    TODO to implement logic for paging
 }

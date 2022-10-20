@@ -1,21 +1,21 @@
 package com.example.soundcloud.controllers;
 
+import com.example.soundcloud.models.dto.DislikeDTO;
+import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.ResponseGetSongInfoDTO;
 import com.example.soundcloud.models.dto.song.RequestSongFilterDTO;
 import com.example.soundcloud.models.dto.song.ResponseSongFilterDTO;
-import com.example.soundcloud.models.entities.Song;
-import com.example.soundcloud.models.repositories.SongRepository;
-import com.example.soundcloud.models.services.SongService;
+import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
 @RequestMapping("/songs")
-public class SongController {
+public class SongController extends GlobalController {
     @Autowired
-    private SongRepository songRepository;
     private SongService songService;
 
 //    GET:
@@ -34,51 +34,54 @@ public class SongController {
 //    DELETE:
 //    - Delete.
 
-    @GetMapping("/songs/{id}/info")
-    public ResponseGetSongInfoDTO searchById(@PathVariable int id){
-        return new ResponseGetSongInfoDTO(this.songService.getById(id));
+    @GetMapping("/{sid}/info")
+    public ResponseGetSongInfoDTO searchById(@PathVariable int sid){
+        return new ResponseGetSongInfoDTO(songService.findSongById(sid));
     }
 
-    @GetMapping("/songs/by_username/{username}")
+    @GetMapping("/by_username/{username}")
     public List<ResponseSongFilterDTO> searchByUploader(@PathVariable String username){
         return this.songService.searchByUploader(username);
     }
 
-    @GetMapping("/songs/{username}/liked")
+    @GetMapping("/{username}/liked")
     public List<ResponseSongFilterDTO> searchLikedSongs(@PathVariable String username){
         return this.songService.searchLikedSongsByUser(username);
     }
 
-    @GetMapping("/songs/by_genre/{genre}")
+    @GetMapping("/by_genre/{genre}")
     public List<ResponseSongFilterDTO> searchByGenre(@PathVariable String genre){
         return this.songService.searchByGenre(genre);
     }
 
-
-    //TODO filter songs (by likes, by dates etc.);
-    @GetMapping
+    @GetMapping("by_filter/{filterType}")
     public List<ResponseSongFilterDTO> filterSongs(@RequestBody RequestSongFilterDTO filterType){
         return this.songService.filterSongs(filterType);
     }
 
 
-
-//    TODO to return a List with songs where the titles contains a given String;
-    @GetMapping("/songs/by_title")
+    //TODO to improve the method - return a List with songs where the titles contains a given String;
+    @GetMapping("/by_title")
     public ResponseSongFilterDTO searchByTitle(String title){
-        return new ResponseSongFilterDTO(this.songService.searchByTitle(title));
+        return this.songService.searchByTitle(title);
     }
 
 
-
-    //TODO upload
-//
-//    public Song upload() {
-//    }
-
     //TODO like/dislike song
-    //TODO edit info;
-    //TODO Delete song;
+    @PostMapping("/{sid}/like")
+    public LikeDTO like(@PathVariable long sid, HttpServletRequest request) {
+        long uid = getLoggedUserId(request);
+        return songService.like(sid, uid);
+    }
 
+    @PostMapping("/{sid}/dislike")
+    public DislikeDTO dislike(@PathVariable long sid, HttpServletRequest request){
+        long uid = getLoggedUserId(request);
+        return songService.dislike(sid,uid);
+    }
+
+    //TODO edit info;
+    //TODO upload a song;
+    //TODO Delete a song;
 
 }

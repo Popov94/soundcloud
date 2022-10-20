@@ -7,10 +7,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface SongRepository extends JpaRepository<Song, Integer> {
+public interface SongRepository extends JpaRepository<Song, Long> {
 
-    Song getSongById(long id);
     List<Song> getAllByGenre(String genre);
     Song getSongByTitle(String title);
     List<Song> getAllByUploader(String username);
+
+
 }

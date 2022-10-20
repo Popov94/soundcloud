@@ -18,9 +18,8 @@ public class ResponseSongUploadDTO {
     private String url;
     private LocalDateTime createdAt;
 
-
     public ResponseSongUploadDTO(Song song){
-        this.id = song.getId();
+        this.id = (int) song.getId();
         this.title = song.getTitle();
         this.genre = song.getGenre();
         this.artist = song.getArtist();

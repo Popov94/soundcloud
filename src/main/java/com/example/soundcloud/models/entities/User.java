@@ -11,6 +11,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -56,6 +57,28 @@ public class User {
     @Column(name = "verified")
     private boolean isVerified;
 
-    
+
+//    TODO to create OneToMany relationship for User-songs
+//    TODO to create OneToMany relationship for User-Comments
+//    TODO to create OneToMany relationship for User-Playlists
+//    TODO to create ManyToMany relationship with Comments for Like/Dislike
+
+
+//    TODO to create ManyToMany relationship with Songs for Like/Dislike
+    @ManyToMany
+    @JoinTable(
+            name = "users_like_songs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "song_id")
+    )
+    List<Song> likedSongs;
+
+    @ManyToMany
+    @JoinTable(
+            name = "users_dislike_songs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "song_id")
+    )
+    List<Song> dislikedSongs;
     
 }

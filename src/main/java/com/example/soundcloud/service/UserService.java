@@ -19,24 +19,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {
-
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ModelMapper modelMapper;
+public class UserService extends AbstractService {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Autowired
     private Utility utility;
 
-    public UserWithoutPDTO register(RegisterDTO u) {
-        if (utility.validateRegistration(u)) {
-            u.setCreatedAt(LocalDateTime.now());
-            User u1 = modelMapper.map(u, User.class);
-            u1.setPassword(bCryptPasswordEncoder.encode(u1.getPassword()));
-            userRepository.save(u1);
-            return modelMapper.map(u1, UserWithoutPDTO.class);
+    public UserWithoutPDTO register(RegisterDTO user) {
+        if (utility.validateRegistration(user)) {
+            user.setCreatedAt(LocalDateTime.now());
+            User user1 = modelMapper.map(user, User.class);
+            user1.setPassword(bCryptPasswordEncoder.encode(user1.getPassword()));
+            userRepository.save(user1);
+            return modelMapper.map(user1, UserWithoutPDTO.class);
         }
         return null;
     }
@@ -49,11 +44,11 @@ public class UserService {
         String username = dto.getUsername();
         Optional<User> user = userRepository.findUserByUsername(username);
         if (user.isPresent()) {
-            User u = user.get();
-            if (bCryptPasswordEncoder.matches(password, u.getPassword())) {
-                u.setLastLogin(LocalDateTime.now());
-                userRepository.save(u);
-                return modelMapper.map(u, UserWithoutPDTO.class);
+            User user1 = user.get();
+            if (bCryptPasswordEncoder.matches(password, user1.getPassword())) {
+                user1.setLastLogin(LocalDateTime.now());
+                userRepository.save(user1);
+                return modelMapper.map(user1, UserWithoutPDTO.class);
             } else {
                 throw new UnauthorizedException("Wrong username or password!");
             }
@@ -65,8 +60,8 @@ public class UserService {
     public UserWithoutPDTO getUserById(long id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
-            User u = user.get();
-            UserWithoutPDTO dto = modelMapper.map(u, UserWithoutPDTO.class);
+            User user1 = user.get();
+            UserWithoutPDTO dto = modelMapper.map(user1, UserWithoutPDTO.class);
             return dto;
         } else {
             throw new NotFoundException("User does not exist!");
@@ -78,15 +73,12 @@ public class UserService {
     }
 
     public UserWithoutPDTO editProfile(EditDTO dto, long id) {
-        System.out.println(id);
-        User u1 = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
-        System.out.println(u1);
-        System.out.println(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
         if (utility.editProfileValidation(dto)) {
-            if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), u1.getPassword())) {
-                User u = setEdit(dto, u1);
-                userRepository.save(u);
-                return modelMapper.map(u, UserWithoutPDTO.class);
+            if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+                User user1 = setEdit(dto, user);
+                userRepository.save(user1);
+                return modelMapper.map(user1, UserWithoutPDTO.class);
             } else {
                 throw new MethodNotAllowedException("Password is wrong");
             }
@@ -95,45 +87,39 @@ public class UserService {
         }
     }
 
-    private User setEdit(EditDTO dto, User u1) {
-        System.out.println(u1);
-        u1.setEmail(dto.getEmail());
-        u1.setLastName(dto.getLastName());
-        u1.setFirstName(dto.getFirstName());
-        u1.setAddress(dto.getAddress());
-        u1.setCity(dto.getCity());
-        u1.setDateOfBirthday(dto.getDateOfBirthday());
-        u1.setGender(dto.getGender());
-        u1.setUsername(dto.getUsername());
-        return u1;
+    private User setEdit(EditDTO dto, User user) {
+        user.setEmail(dto.getEmail());
+        user.setLastName(dto.getLastName());
+        user.setFirstName(dto.getFirstName());
+        user.setAddress(dto.getAddress());
+        user.setCity(dto.getCity());
+        user.setDateOfBirthday(dto.getDateOfBirthday());
+        user.setGender(dto.getGender());
+        user.setUsername(dto.getUsername());
+        return user;
     }
 
-    public String logOut(HttpSession session) {
-        long x = (Long) session.getAttribute("USER_ID");
-        User name = null;
-        name = userRepository.findById(x).get();
-        session.invalidate();
-        return "Mr. " + name.getLastName() + " you have been logged out successfully!";
+    public String logOut(long userId) {
+        User user = findUserById(userId);
+        return "Mr. " + user.getLastName() + " you have been logged out successfully!";
     }
 
-    public String deleteUser(HttpSession session, DeleteDTO dto) {
-        long x = (long) session.getAttribute("USER_ID");
-        User u = userRepository.findById(x).get();
-        if (bCryptPasswordEncoder.matches(dto.getPassword(), u.getPassword())) {
-            userRepository.deleteById(u.getId());
-            return "User: " + u.getUsername() + " has been successfully deleted";
+    public String deleteUser(long userId, DeleteDTO dto) {
+        User user = findUserById(userId);
+        if (bCryptPasswordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            userRepository.deleteById(user.getId());
+            return "User: " + user.getUsername() + " has been successfully deleted";
         } else {
             throw new UnauthorizedException("Password does not match!");
         }
     }
 
-    public String changePW(ChangePDTO dto, HttpSession session) {
-        long x = (long) session.getAttribute("USER_ID");
-        User u = userRepository.findById(x).get();
-        if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), u.getPassword())) {
+    public String changePW(ChangePDTO dto, long userId) {
+        User user = findUserById(userId);
+        if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             if (dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
-                u.setPassword(bCryptPasswordEncoder.encode(dto.getNewPassword()));
-                userRepository.save(u);
+                user.setPassword(bCryptPasswordEncoder.encode(dto.getNewPassword()));
+                userRepository.save(user);
                 return "Your password have been changed successfully!";
             } else {
                 throw new BadRequestException("New passwords does not match!");

@@ -29,19 +29,19 @@ public class ResponseGetSongInfoDTO {
 
 
     public ResponseGetSongInfoDTO(Song songById) {
-        this.id = id;
-        this.title = title;
-        this.genre = genre;
-        this.artist = artist;
-        this.url = url;
-        this.createdAt = createdAt;
-        this.listened = listened;
-        this.description = description;
+        this.id = (int) songById.getId();
+        this.title = songById.getTitle();
+        this.genre = songById.getGenre();
+        this.artist = songById.getArtist();
+        this.url = songById.getUrl();
+        this.createdAt = songById.getCreatedAt();
+        this.listened = songById.getListened();
+        this.description = songById.getDescription();
 //        this.likedUsers = new ArrayList<>();
 //        this.dislikedUsers = new ArrayList<>();
 //        this.comments = new ArrayList<>();
 
-        // TODO iterating likes,dislikes and comments and add in the lists.
+//         TODO iterating likes,dislikes and comments and add in the lists.
     }
 
 }

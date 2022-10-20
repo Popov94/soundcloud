@@ -22,7 +22,7 @@ public class ResponseSongFilterDTO {
     public ResponseSongFilterDTO(Song song) {
         this.title = song.getTitle();
         this.uploader = song.getUploader().getUsername();
-        this.songId = song.getId();
+        this.songId = (int) song.getId();
         this.listened = song.getListened();
 //        this.likes = song.getLikedUsers().size();
 //        this.dislikes = song.getDislikedUsers().size();
