@@ -74,7 +74,7 @@ public class UserService extends AbstractService {
 
     public UserWithoutPDTO editProfile(EditDTO dto, long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
-        if (utility.editProfileValidation(dto)) {
+        if (utility.editProfileValidation(dto, id)) {
             if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
                 User user1 = setEdit(dto, user);
                 userRepository.save(user1);

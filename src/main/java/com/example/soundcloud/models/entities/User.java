@@ -64,10 +64,10 @@ public class User {
 //    TODO to create ManyToMany relationship with Comments for Like/Dislike
 
 
-//    TODO to create ManyToMany relationship with Songs for Like/Dislike
+    //TODO to create ManyToMany relationship with Songs for Like/Dislike
     @ManyToMany
     @JoinTable(
-            name = "users_like_songs",
+            name = "users_likes_songs",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "song_id")
     )
@@ -80,5 +80,5 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "song_id")
     )
     List<Song> dislikedSongs;
-    
+
 }

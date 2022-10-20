@@ -36,9 +36,9 @@ public class Utility {
         }
     }
 
-    protected boolean editProfileValidation(EditDTO u) {
-        if (usernameExist(u) &&
-                emailExist(u) &&
+    protected boolean editProfileValidation(EditDTO u, long id) {
+        if (usernameExist(u,id) &&
+                emailExist(u,id) &&
                 firstNValidation(u.getFirstName()) &&
                 lastNValidation(u.getLastName()) &&
                 userNameValidation(u.getUsername()) &&
@@ -162,7 +162,10 @@ public class Utility {
         }
     }
 
-    protected boolean usernameExist(EditDTO dto) {
+    protected boolean usernameExist(EditDTO dto,long id) {
+        if (userRepository.findById(id).get().getUsername().equals(dto.getUsername())){
+            return true;
+        }
         if (userRepository.findAllByUsername(dto.getUsername()).size() > 0) {
             throw new BadRequestException("This username already exist!");
         } else {
@@ -170,7 +173,10 @@ public class Utility {
         }
     }
 
-    protected boolean emailExist(EditDTO dto) {
+    protected boolean emailExist(EditDTO dto,long id) {
+        if (userRepository.findById(id).get().getEmail().equals(dto.getEmail())){
+            return true;
+        }
         if (userRepository.findAllByEmail(dto.getEmail()).size() > 0) {
             throw new BadRequestException("This email already exist!");
         } else {

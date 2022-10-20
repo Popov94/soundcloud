@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "playlists")
+@Table(name = "playlists_songs")
 public class Playlist {
 
 
@@ -25,7 +25,7 @@ public class Playlist {
 
     @ManyToMany
     @JoinTable(
-            name = "playlist_songs",
+            name = "playlists_songs",
             joinColumns = @JoinColumn(name = "playlists_id"),
             inverseJoinColumns = @JoinColumn(name = "songs_id")
     )
