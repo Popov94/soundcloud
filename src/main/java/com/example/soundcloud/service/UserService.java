@@ -1,5 +1,6 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
@@ -7,12 +8,17 @@ import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import com.example.soundcloud.models.repositories.UserRepository;
+import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,13 +31,13 @@ public class UserService extends AbstractService {
     @Autowired
     private Utility utility;
 
-    public UserWithoutPDTO register(RegisterDTO user) {
-        if (utility.validateRegistration(user)) {
-            user.setCreatedAt(LocalDateTime.now());
-            User user1 = modelMapper.map(user, User.class);
-            user1.setPassword(bCryptPasswordEncoder.encode(user1.getPassword()));
-            userRepository.save(user1);
-            return modelMapper.map(user1, UserWithoutPDTO.class);
+    public UserWithoutPDTO register(RegisterDTO userDTO) {
+        if (utility.validateRegistration(userDTO)) {
+            userDTO.setCreatedAt(LocalDateTime.now());
+            User user = modelMapper.map(userDTO, User.class);
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            userRepository.save(user);
+            return modelMapper.map(user, UserWithoutPDTO.class);
         }
         return null;
     }
@@ -42,13 +48,14 @@ public class UserService extends AbstractService {
         }
         String password = dto.getPassword();
         String username = dto.getUsername();
-        Optional<User> user = userRepository.findUserByUsername(username);
-        if (user.isPresent()) {
-            User user1 = user.get();
-            if (bCryptPasswordEncoder.matches(password, user1.getPassword())) {
-                user1.setLastLogin(LocalDateTime.now());
-                userRepository.save(user1);
-                return modelMapper.map(user1, UserWithoutPDTO.class);
+        Optional<User> optionalUser = userRepository.findUserByUsername(username);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (bCryptPasswordEncoder.matches(password, user.getPassword())) {
+                user.setLastLogin(LocalDateTime.now());
+                userRepository.save(user);
+                System.out.println(user.getSongs().size());
+                return modelMapper.map(user, UserWithoutPDTO.class);
             } else {
                 throw new UnauthorizedException("Wrong username or password!");
             }
@@ -58,10 +65,10 @@ public class UserService extends AbstractService {
     }
 
     public UserWithoutPDTO getUserById(long id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            User user1 = user.get();
-            UserWithoutPDTO dto = modelMapper.map(user1, UserWithoutPDTO.class);
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            UserWithoutPDTO dto = modelMapper.map(user, UserWithoutPDTO.class);
             return dto;
         } else {
             throw new NotFoundException("User does not exist!");
@@ -76,9 +83,9 @@ public class UserService extends AbstractService {
         User user = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
         if (utility.editProfileValidation(dto, id)) {
             if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
-                User user1 = setEdit(dto, user);
-                userRepository.save(user1);
-                return modelMapper.map(user1, UserWithoutPDTO.class);
+                setEdit(dto, user);
+                userRepository.save(user);
+                return modelMapper.map(user, UserWithoutPDTO.class);
             } else {
                 throw new MethodNotAllowedException("Password is wrong");
             }
@@ -87,7 +94,7 @@ public class UserService extends AbstractService {
         }
     }
 
-    private User setEdit(EditDTO dto, User user) {
+    private void setEdit(EditDTO dto, User user) {
         user.setEmail(dto.getEmail());
         user.setLastName(dto.getLastName());
         user.setFirstName(dto.getFirstName());
@@ -96,12 +103,15 @@ public class UserService extends AbstractService {
         user.setDateOfBirthday(dto.getDateOfBirthday());
         user.setGender(dto.getGender());
         user.setUsername(dto.getUsername());
-        return user;
     }
 
     public String logOut(long userId) {
         User user = findUserById(userId);
-        return "Mr. " + user.getLastName() + " you have been logged out successfully!";
+        if (user.getGender().equals("Male")) {
+            return "Mr. " + user.getLastName() + " you have been logged out successfully!";
+        } else {
+            return "Mrs. " + user.getLastName() + " you have been logged out successfully!";
+        }
     }
 
     public String deleteUser(long userId, DeleteDTO dto) {
@@ -127,5 +137,46 @@ public class UserService extends AbstractService {
         } else {
             throw new BadRequestException("Password is incorrect!");
         }
+    }
+
+    public String uploadProfileImage(MultipartFile file, long userId) {
+        if (utility.profileImageValidation(file)) {
+            try {
+                User user = findUserById(userId);
+                String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                String name = "uploads" + File.separator + System.nanoTime() + userId + "." + extension;
+                File f = new File(name);
+                if (!f.exists()) {
+                    Files.copy(file.getInputStream(), f.toPath());
+                } else {
+                    throw new BadRequestException("The file already exist. This should never happen. Call the service!");
+                }
+                if (user.getProfileImageUrl() != null) {
+                    File oldFile = new File(user.getProfileImageUrl());
+                    oldFile.delete();
+                }
+                user.setProfileImageUrl(name);
+                userRepository.save(user);
+                return name;
+            } catch (IOException exception) {
+                throw new BadRequestException(exception.getMessage(), exception);
+            }
+        } else {
+            throw new BadRequestException("Only images can be uploaded, and they must be under 5MB!");
+        }
+    }
+
+    public String deleteProfileImage(long userId) {
+        User user = findUserById(userId);
+        File profileImage = new File(user.getProfileImageUrl());
+        profileImage.delete();
+        return "Your profile picture has been removed!";
+    }
+
+    public UserWithoutPWithSongsDTO getUserSongsById(long id) {
+        User user = findUserById(id);
+        UserWithoutPWithSongsDTO dto = modelMapper.map(user, UserWithoutPWithSongsDTO.class);
+        dto.setSongs(user.getSongs().stream().map(song -> modelMapper.map(song, SongWithoutUserDTO.class)).collect(Collectors.toList()));
+        return dto;
     }
 }

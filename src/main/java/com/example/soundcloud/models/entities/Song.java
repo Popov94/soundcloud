@@ -22,7 +22,7 @@ public class Song {
         @Column
         private String genre;
         @Column
-        String artist;
+        private String artist;
         @Column
         private int listened;
         @Column

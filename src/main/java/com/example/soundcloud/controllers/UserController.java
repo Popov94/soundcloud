@@ -1,13 +1,18 @@
 package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.user.*;
+import com.example.soundcloud.models.exceptions.BadRequestException;
+import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import com.example.soundcloud.service.UserService;
+import jdk.jfr.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.websocket.Session;
 import java.util.List;
 
 @RestController
@@ -15,7 +20,7 @@ public class UserController extends GlobalController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping("/users")
     public UserWithoutPDTO register(@RequestBody RegisterDTO user) {
         return userService.register(user);
     }
@@ -30,9 +35,20 @@ public class UserController extends GlobalController {
         return userService.getUserById(id);
     }
 
+    @GetMapping("/users/{id}/songs")
+    public UserWithoutPWithSongsDTO getUserSongsById(@PathVariable long id){
+        return userService.getUserSongsById(id);
+    }
+
     @PostMapping("/auth")
     public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req) {
         UserWithoutPDTO user = userService.login(dto);
+        HttpSession session = req.getSession();
+        if (session.getAttribute("LOGGED") != null) {
+            throw new MethodNotAllowedException("You are already logged in as " + user.getFirstName() +
+                    " " + user.getLastName() + "," +
+                    " you need to log out before logging in as different user. ");
+        }
         if (user != null) {
             logUser(req, user.getId());
             return user;
@@ -41,13 +57,13 @@ public class UserController extends GlobalController {
         }
     }
 
-    @PutMapping("/users/edit_profile")
+    @PutMapping("/users")
     public UserWithoutPDTO editProfile(@RequestBody EditDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return userService.editProfile(dto, userId);
     }
 
-    @PostMapping("/auth1")
+    @PostMapping("/logout")
     public String logOut(@RequestBody LogOut dto, HttpServletRequest req) {
         HttpSession session = req.getSession();
         long userId = getLoggedUserId(req);
@@ -55,15 +71,28 @@ public class UserController extends GlobalController {
         return userService.logOut(userId);
     }
 
-    @PostMapping("/users/delete")
+    @DeleteMapping("/users")
     public String deleteUser(@RequestBody DeleteDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return userService.deleteUser(userId, dto);
     }
 
-    @PutMapping("/users/edit_profile/change_pw")
+    @PutMapping("/users/pass")
     public String changePW(@RequestBody ChangePDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return userService.changePW(dto, userId);
+    }
+
+    @PostMapping("/users/uploads")
+    public String uploadProfileImage(@RequestParam(value = "file") MultipartFile file, HttpServletRequest req) {
+        long userId = getLoggedUserId(req);
+        return userService.uploadProfileImage(file, userId);
+    }
+
+    @PutMapping("/users/uploads")
+    public String deleteProfileImage(HttpServletRequest req) {
+        long userId = getLoggedUserId(req);
+        return userService.deleteProfileImage(userId);
+
     }
 }

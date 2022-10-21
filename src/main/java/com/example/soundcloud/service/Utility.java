@@ -7,6 +7,7 @@ import com.example.soundcloud.models.repositories.UserRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.regex.Matcher;
@@ -37,8 +38,8 @@ public class Utility {
     }
 
     protected boolean editProfileValidation(EditDTO u, long id) {
-        if (usernameExist(u,id) &&
-                emailExist(u,id) &&
+        if (usernameExist(u, id) &&
+                emailExist(u, id) &&
                 firstNValidation(u.getFirstName()) &&
                 lastNValidation(u.getLastName()) &&
                 userNameValidation(u.getUsername()) &&
@@ -162,8 +163,8 @@ public class Utility {
         }
     }
 
-    protected boolean usernameExist(EditDTO dto,long id) {
-        if (userRepository.findById(id).get().getUsername().equals(dto.getUsername())){
+    protected boolean usernameExist(EditDTO dto, long id) {
+        if (userRepository.findById(id).get().getUsername().equals(dto.getUsername())) {
             return true;
         }
         if (userRepository.findAllByUsername(dto.getUsername()).size() > 0) {
@@ -173,8 +174,8 @@ public class Utility {
         }
     }
 
-    protected boolean emailExist(EditDTO dto,long id) {
-        if (userRepository.findById(id).get().getEmail().equals(dto.getEmail())){
+    protected boolean emailExist(EditDTO dto, long id) {
+        if (userRepository.findById(id).get().getEmail().equals(dto.getEmail())) {
             return true;
         }
         if (userRepository.findAllByEmail(dto.getEmail()).size() > 0) {
@@ -184,7 +185,7 @@ public class Utility {
         }
     }
 
-    protected static boolean emailValidation(String email) {
+    protected boolean emailValidation(String email) {
         Pattern p = Pattern.compile("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(email);
         boolean isMatching = m.matches();
@@ -195,7 +196,7 @@ public class Utility {
         }
     }
 
-    protected static boolean addressValidation(String address) {
+    protected boolean addressValidation(String address) {
         if (address == null) {
             return true;
         }
@@ -209,7 +210,7 @@ public class Utility {
         }
     }
 
-    protected static boolean countryValidation(String country) {
+    protected boolean countryValidation(String country) {
         if (country == null) {
             return true;
         }
@@ -223,7 +224,7 @@ public class Utility {
         }
     }
 
-    protected static boolean cityValidation(String city) {
+    protected boolean cityValidation(String city) {
         if (city == null) {
             return true;
         }
@@ -234,6 +235,19 @@ public class Utility {
             return true;
         } else {
             throw new BadRequestException("Invalid city");
+        }
+    }
+
+    protected boolean profileImageValidation(MultipartFile file) {
+        if (file.getSize() > (5 * 1024 * 1024)) { //5MB
+            throw new BadRequestException("Image can not be more then 5MB!");
+        } else {
+            if (!file.getContentType().startsWith("image/")) {
+            throw new BadRequestException("Only images are allowed here!");
+        } else {
+                return true;
+            }
+
         }
     }
 

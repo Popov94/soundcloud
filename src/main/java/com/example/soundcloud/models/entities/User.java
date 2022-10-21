@@ -4,6 +4,10 @@ package com.example.soundcloud.models.entities;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sun.istack.NotNull;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -21,6 +25,7 @@ public class User {
     public User(){
 
     }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +61,11 @@ public class User {
     private String country;
     @Column(name = "verified")
     private boolean isVerified;
+    @Column
+    private String profileImageUrl;
+    @OneToMany(mappedBy = "uploader")
+    private List<Song> songs;
+
 
 
 //    TODO to create OneToMany relationship for User-songs

@@ -2,9 +2,8 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
-import com.example.soundcloud.models.dto.song.ResponseGetSongInfoDTO;
-import com.example.soundcloud.models.dto.song.RequestSongFilterDTO;
-import com.example.soundcloud.models.dto.song.ResponseSongFilterDTO;
+import com.example.soundcloud.models.dto.song.*;
+import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +33,14 @@ public class SongController extends GlobalController {
 //    DELETE:
 //    - Delete.
 
+    @GetMapping("/{sid}")
+    public ResponseSongDTO getSongWithUserById(@PathVariable long sid){
+        System.out.println(sid);
+        return songService.getSongWithUserById(sid);
+    }
+
     @GetMapping("/{sid}/info")
-    public ResponseGetSongInfoDTO searchById(@PathVariable int sid){
+    public ResponseGetSongInfoDTO searchById(@PathVariable long sid){
         return new ResponseGetSongInfoDTO(songService.findSongById(sid));
     }
 
@@ -79,6 +84,8 @@ public class SongController extends GlobalController {
         long uid = getLoggedUserId(request);
         return songService.dislike(sid,uid);
     }
+
+
 
     //TODO edit info;
     //TODO upload a song;

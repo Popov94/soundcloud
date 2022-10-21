@@ -23,6 +23,7 @@ public class UserWithoutPDTO {
     private String address;
     private String city;
     private String country;
+    private String profileImageUrl;
     private boolean isVerified;
 
 
