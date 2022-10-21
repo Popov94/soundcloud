@@ -62,9 +62,12 @@ public class User {
     @Column(name = "verified")
     private boolean isVerified;
     @Column
+    private String verificationCode;
+    @Column
     private String profileImageUrl;
     @OneToMany(mappedBy = "uploader")
     private List<Song> songs;
+
 
 
 

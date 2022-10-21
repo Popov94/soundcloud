@@ -35,6 +35,12 @@ public class UserController extends GlobalController {
         return userService.getUserById(id);
     }
 
+    @PostMapping("/users/verify")
+    public String verifyAccount(@RequestBody VerifyDTO dto, HttpServletRequest req){
+        long userId = getLoggedUserId(req);
+        return userService.verifyAccount(userId, dto);
+    }
+
     @GetMapping("/users/{id}/songs")
     public UserWithoutPWithSongsDTO getUserSongsById(@PathVariable long id){
         return userService.getUserSongsById(id);

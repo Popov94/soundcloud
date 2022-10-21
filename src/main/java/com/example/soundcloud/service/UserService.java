@@ -8,16 +8,23 @@ import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import com.example.soundcloud.models.repositories.UserRepository;
+import lombok.SneakyThrows;
+import net.bytebuddy.utility.RandomString;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,21 +32,50 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+
 public class UserService extends AbstractService {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Autowired
     private Utility utility;
 
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @SneakyThrows
     public UserWithoutPDTO register(RegisterDTO userDTO) {
         if (utility.validateRegistration(userDTO)) {
             userDTO.setCreatedAt(LocalDateTime.now());
             User user = modelMapper.map(userDTO, User.class);
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            String verificationCode = RandomString.make(64);
+            user.setVerificationCode(verificationCode);
+            sendVerificationEmail(user);
             userRepository.save(user);
             return modelMapper.map(user, UserWithoutPDTO.class);
         }
         return null;
+    }
+
+    private void sendVerificationEmail(User user)
+            throws MessagingException, UnsupportedEncodingException {
+        String toAddress = user.getEmail();
+        String fromAddress = "soundcloudtests14@gmail.com";
+        String senderName = "Sound Cloud";
+        String subject = "Please verify your registration";
+        String content = "Dear [[name]],<br>"
+                + "Please use the generated code below to verify your registration:<br>"
+                + "<h3><a href=\"[[URL]]\" target=\"_self\">CODE: " + user.getVerificationCode() + " </a></h3>"
+                + "Thank you,<br>"
+                + "Sound Cloud-IT Talents s14.";
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+        helper.setFrom(fromAddress, senderName);
+        helper.setTo(toAddress);
+        helper.setSubject(subject);
+        content = content.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
+        helper.setText(content, true);
+        mailSender.send(message);
     }
 
     public UserWithoutPDTO login(LoginDTO dto) {
@@ -178,5 +214,17 @@ public class UserService extends AbstractService {
         UserWithoutPWithSongsDTO dto = modelMapper.map(user, UserWithoutPWithSongsDTO.class);
         dto.setSongs(user.getSongs().stream().map(song -> modelMapper.map(song, SongWithoutUserDTO.class)).collect(Collectors.toList()));
         return dto;
+    }
+
+    public String verifyAccount(long userId, VerifyDTO dto) {
+        User user = findUserById(userId);
+        if (user.getVerificationCode().equals(dto.getCode())){
+            user.setVerified(true);
+            userRepository.save(user);
+            return "You have been verified successfully";
+        }else {
+            throw new BadRequestException("Code is wrong!");
+        }
+
     }
 }
