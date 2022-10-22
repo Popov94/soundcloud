@@ -3,7 +3,11 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.ErrorDTO;
 import com.example.soundcloud.models.exceptions.*;
+import com.example.soundcloud.models.repositories.PlaylistRepository;
 import com.example.soundcloud.models.repositories.UserRepository;
+import com.example.soundcloud.service.PlaylistService;
+import com.example.soundcloud.service.SongService;
+import com.example.soundcloud.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +30,14 @@ public abstract class GlobalController {
     protected UserRepository userRepository;
     @Autowired
     protected ModelMapper modelMapper;
+    @Autowired
+    protected PlaylistRepository playlistRepository;
+    @Autowired
+    protected PlaylistService playlistService;
+    @Autowired
+    protected UserService userService;
+    @Autowired
+    protected SongService songService;
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

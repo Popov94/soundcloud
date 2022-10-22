@@ -7,11 +7,9 @@ import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
-import com.example.soundcloud.models.repositories.UserRepository;
 import lombok.SneakyThrows;
 import net.bytebuddy.utility.RandomString;
 import org.apache.commons.io.FilenameUtils;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -21,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -219,6 +216,9 @@ public class UserService extends AbstractService {
         Optional<User> optionalUser = userRepository.findUserByVerificationCode(dto.getCode());
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+            if (user.isVerified()){
+                throw  new BadRequestException("You already verified yourself!");
+            }
             user.setVerified(true);
             userRepository.save(user);
             return "You have been verified successfully";
@@ -252,7 +252,7 @@ public class UserService extends AbstractService {
         if (followedId == followerId) {
             throw new BadRequestException("You can not follow yourself!");
         }
-        for (Long l : userRepository.getFollowingUsers(followerId)) {
+        for (Long l : userRepository.getFollowingUsersIds(followerId)) {
             if (l.equals(followedId)) {
                 throw new BadRequestException("You already followed this user!");
             }
@@ -263,10 +263,21 @@ public class UserService extends AbstractService {
     }
 
     public String unfollowUser(long followerId, long followedId) {
+        if (followedId == followerId){
+            throw new BadRequestException("You can not unfollow yourself!");
+        }
+
+        for (Long l : userRepository.getFollowingUsersIds(followerId)){
+            if (!l.equals(followedId)){
+                System.out.println(l);
+                throw new BadRequestException("You can not unfollow user which u are not following");
+            }
+        }
+        System.out.println("zashto");
         User followedUser = findUserById(followedId);
         User follower = findUserById(followerId);
         follower.getFollowing().remove(followedUser);
         userRepository.save(follower);
-        return "Yu have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();
+        return "You have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();
     }
 }

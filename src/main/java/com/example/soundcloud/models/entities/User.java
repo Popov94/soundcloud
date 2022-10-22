@@ -75,11 +75,13 @@ public class User {
     private List<User> following;
     @ManyToMany(mappedBy = "following")
     private List<User> followers;
+    @OneToMany(mappedBy = "owner")
+    private List<Playlist> playlists;
 
 
 
 
-//    TODO to create OneToMany relationship for User-songs
+//    TODO to create OneToMany relationship for User-songs - done
 //    TODO to create OneToMany relationship for User-Comments
 //    TODO to create OneToMany relationship for User-Playlists
 //    TODO to create ManyToMany relationship with Comments for Like/Dislike

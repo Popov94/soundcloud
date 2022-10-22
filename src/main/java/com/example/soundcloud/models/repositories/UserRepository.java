@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     public List<User> findByKeyword(@Param("keyword") String keyword);
     public Optional<User> findUserByVerificationCode(String code);
     @Query(value = "SELECT following_id FROM followers WHERE follower_id = :followerId", nativeQuery = true)
-    public List<Long> getFollowingUsers(@Param ("followerId") long followerId);
+    public List<Long> getFollowingUsersIds(@Param ("followerId") long followerId);
 
 
 

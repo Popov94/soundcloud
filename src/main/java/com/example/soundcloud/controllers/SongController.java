@@ -14,8 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/songs")
 public class SongController extends GlobalController {
-    @Autowired
-    private SongService songService;
 
 //    GET:
 //    - Search for songs (by name, by genre, by uploader etc.);
@@ -35,7 +33,6 @@ public class SongController extends GlobalController {
 
     @GetMapping("/{sid}")
     public ResponseSongDTO getSongWithUserById(@PathVariable long sid){
-        System.out.println(sid);
         return songService.getSongWithUserById(sid);
     }
 

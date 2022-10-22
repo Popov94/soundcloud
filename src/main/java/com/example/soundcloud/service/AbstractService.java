@@ -1,8 +1,10 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.entities.Playlist;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.NotFoundException;
+import com.example.soundcloud.models.repositories.PlaylistRepository;
 import com.example.soundcloud.models.repositories.SongRepository;
 import com.example.soundcloud.models.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -16,6 +18,8 @@ public class AbstractService {
     protected UserRepository userRepository;
     @Autowired
     protected ModelMapper modelMapper;
+    @Autowired
+    protected PlaylistRepository playlistRepository;
 
     public User findUserById(long userId){
         return userRepository.findById(userId).orElseThrow(()-> new NotFoundException("User does not exist!"));
@@ -23,6 +27,10 @@ public class AbstractService {
 
     public Song findSongById(long songId){
         return songRepository.findById(songId).orElseThrow(()-> new NotFoundException("Song does not exist!"));
+    }
+
+    public Playlist findPlaylistById(long playlistId){
+        return playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException("Playlist does not exist"));
     }
 
 

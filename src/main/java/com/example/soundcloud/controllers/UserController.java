@@ -17,8 +17,6 @@ import java.util.List;
 
 @RestController
 public class UserController extends GlobalController {
-    @Autowired
-    private UserService userService;
 
     @PostMapping("/users")
     public UserWithoutPDTO register(@RequestBody RegisterDTO user) {
@@ -109,13 +107,15 @@ public class UserController extends GlobalController {
     public List<UserWithoutPWithSongsDTO> getUserByName(@PathVariable String userName) {
         return userService.getUserByName(userName);
     }
+
     @PostMapping("/users/{followedId}/follow")
-    public String followUser(@PathVariable long followedId, HttpServletRequest req){
+    public String followUser(@PathVariable long followedId, HttpServletRequest req) {
         long followerId = getLoggedUserId(req);
         return userService.followUser(followerId, followedId);
     }
+
     @DeleteMapping("/users/{followedId}/unfollow")
-    public String unfollowUser(@PathVariable long followedId, HttpServletRequest req){
+    public String unfollowUser(@PathVariable long followedId, HttpServletRequest req) {
         long followerId = getLoggedUserId(req);
         return userService.unfollowUser(followerId, followedId);
     }

@@ -131,7 +131,6 @@ public class SongService extends AbstractService {
     }
 
     public ResponseSongDTO getSongWithUserById(long songId) {
-        System.out.println(songId);
         Song song = findSongById(songId);
         ResponseSongDTO dto = modelMapper.map(song,ResponseSongDTO.class);
         dto.setUploader(modelMapper.map(dto.getUploader(), UserWithoutPDTO.class));
