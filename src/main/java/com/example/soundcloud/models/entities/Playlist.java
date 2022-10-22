@@ -23,13 +23,13 @@ public class Playlist {
     private LocalDateTime createdAt;
 
 
-    @ManyToMany
-    @JoinTable(
-            name = "playlists_songs",
-            joinColumns = @JoinColumn(name = "playlists_id"),
-            inverseJoinColumns = @JoinColumn(name = "songs_id")
-    )
-    private List<Song> songsInPlaylist;
+//    @ManyToMany
+//    @JoinTable(
+//            name = "playlists_songs",
+//            joinColumns = @JoinColumn(name = "playlists_id"),
+//            inverseJoinColumns = @JoinColumn(name = "songs_id")
+//    )
+//    private List<Song> songsInPlaylist;
 
 
 }

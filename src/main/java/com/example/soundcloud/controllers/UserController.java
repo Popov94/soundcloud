@@ -36,13 +36,12 @@ public class UserController extends GlobalController {
     }
 
     @PostMapping("/users/verify")
-    public String verifyAccount(@RequestBody VerifyDTO dto, HttpServletRequest req){
-        long userId = getLoggedUserId(req);
-        return userService.verifyAccount(userId, dto);
+    public String verifyAccount(@RequestBody VerifyDTO dto) {
+        return userService.verifyAccount(dto);
     }
 
     @GetMapping("/users/{id}/songs")
-    public UserWithoutPWithSongsDTO getUserSongsById(@PathVariable long id){
+    public UserWithoutPWithSongsDTO getUserSongsById(@PathVariable long id) {
         return userService.getUserSongsById(id);
     }
 
@@ -57,6 +56,10 @@ public class UserController extends GlobalController {
         }
         if (user != null) {
             logUser(req, user.getId());
+            if (!userService.isUserVerified(user.getId())) {
+                session.invalidate();
+                throw new MethodNotAllowedException("You have to confirm your registration!");
+            }
             return user;
         } else {
             throw new UnauthorizedException("Wrong username or password!");
@@ -99,6 +102,21 @@ public class UserController extends GlobalController {
     public String deleteProfileImage(HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return userService.deleteProfileImage(userId);
+    }
 
+    //return user with his songs or without??
+    @GetMapping("/users/search/{userName}")
+    public List<UserWithoutPWithSongsDTO> getUserByName(@PathVariable String userName) {
+        return userService.getUserByName(userName);
+    }
+    @PostMapping("/users/{followedId}/follow")
+    public String followUser(@PathVariable long followedId, HttpServletRequest req){
+        long followerId = getLoggedUserId(req);
+        return userService.followUser(followerId, followedId);
+    }
+    @DeleteMapping("/users/{followedId}/unfollow")
+    public String unfollowUser(@PathVariable long followedId, HttpServletRequest req){
+        long followerId = getLoggedUserId(req);
+        return userService.unfollowUser(followerId, followedId);
     }
 }

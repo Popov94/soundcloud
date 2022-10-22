@@ -36,12 +36,12 @@ public class Song {
         @JoinColumn(name = "uploader_id")
         private User uploader;
 
-        @OneToMany(mappedBy = "song")
+//        @OneToMany(mappedBy = "song")
+//
+//        private List<Comment> comments;
 
-        private List<Comment> comments;
-
-        @ManyToMany(mappedBy = "songsInPlaylist")
-        private List<Playlist> playlist;
+//        @ManyToMany(mappedBy = "songsInPlaylist")
+//        private List<Playlist> playlist;
 
         @ManyToMany(mappedBy = "likedSongs")
         private List<User> likers;

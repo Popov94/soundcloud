@@ -90,7 +90,6 @@ public class UserService extends AbstractService {
             if (bCryptPasswordEncoder.matches(password, user.getPassword())) {
                 user.setLastLogin(LocalDateTime.now());
                 userRepository.save(user);
-                System.out.println(user.getSongs().size());
                 return modelMapper.map(user, UserWithoutPDTO.class);
             } else {
                 throw new UnauthorizedException("Wrong username or password!");
@@ -216,15 +215,58 @@ public class UserService extends AbstractService {
         return dto;
     }
 
-    public String verifyAccount(long userId, VerifyDTO dto) {
-        User user = findUserById(userId);
-        if (user.getVerificationCode().equals(dto.getCode())){
+    public String verifyAccount(VerifyDTO dto) {
+        Optional<User> optionalUser = userRepository.findUserByVerificationCode(dto.getCode());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
             user.setVerified(true);
             userRepository.save(user);
             return "You have been verified successfully";
-        }else {
+        } else {
             throw new BadRequestException("Code is wrong!");
         }
 
+    }
+
+    public List<UserWithoutPWithSongsDTO> getUserByName(String userName) {
+        List<User> users = userRepository.findByKeyword(userName).stream().collect(Collectors.toList());
+        List<UserWithoutPWithSongsDTO> dto = users.
+                stream().
+                map(user -> modelMapper.map(user, UserWithoutPWithSongsDTO.class)).
+                collect(Collectors.toList());
+        return dto;
+    }
+
+    public boolean isUserVerified(long userId) {
+        User user = findUserById(userId);
+        if (user.isVerified()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String followUser(long followerId, long followedId) {
+        User followedUser = findUserById(followedId);
+        User follower = findUserById(followerId);
+        if (followedId == followerId) {
+            throw new BadRequestException("You can not follow yourself!");
+        }
+        for (Long l : userRepository.getFollowingUsers(followerId)) {
+            if (l.equals(followedId)) {
+                throw new BadRequestException("You already followed this user!");
+            }
+        }
+        follower.getFollowing().add(followedUser);
+        userRepository.save(follower);
+        return "You followed successfully " + followedUser.getFirstName() + " " + followedUser.getLastName();
+    }
+
+    public String unfollowUser(long followerId, long followedId) {
+        User followedUser = findUserById(followedId);
+        User follower = findUserById(followerId);
+        follower.getFollowing().remove(followedUser);
+        userRepository.save(follower);
+        return "Yu have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();
     }
 }

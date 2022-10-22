@@ -19,9 +19,9 @@ public class Comment {
     @Column
     private int owner;
 
-    @ManyToOne
-    @JoinColumn(name = "comments")
-    private Song song;
+//    @ManyToOne
+//    @JoinColumn(name = "comments")
+//    private Song song;
 
 
 

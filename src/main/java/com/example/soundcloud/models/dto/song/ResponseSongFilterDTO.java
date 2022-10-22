@@ -27,6 +27,6 @@ public class ResponseSongFilterDTO {
 //        this.likes = song.getLikedUsers().size();
 //        this.dislikes = song.getDislikedUsers().size();
         this.uploadedAt = song.getCreatedAt();
-        this.comments = song.getComments().size();
+//        this.comments = song.getComments().size();
     }
 }
