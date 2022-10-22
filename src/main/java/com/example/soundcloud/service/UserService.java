@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
 public class UserService extends AbstractService {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Autowired
-    private Utility utility;
 
     @Autowired
     private JavaMailSender mailSender;

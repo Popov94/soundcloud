@@ -3,8 +3,8 @@ package com.example.soundcloud.service;
 import com.example.soundcloud.models.dto.user.EditDTO;
 import com.example.soundcloud.models.dto.user.RegisterDTO;
 import com.example.soundcloud.models.exceptions.BadRequestException;
+import com.example.soundcloud.models.repositories.PlaylistRepository;
 import com.example.soundcloud.models.repositories.UserRepository;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,9 +15,10 @@ import java.util.regex.Pattern;
 
 @Service
 public class Utility {
-
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    protected PlaylistRepository playlistRepository;
 
     protected boolean validateRegistration(RegisterDTO u) {
         if (userExist(u.getEmail(), u.getUsername()) &&
@@ -55,16 +56,35 @@ public class Utility {
         }
     }
 
+    protected boolean PlaylistNameValidation(String tittle) {
+        if (validationWithRegex("^(\\s)*[A-Za-z]+((\\s)?((\\'|\\-|\\.)?([A-Za-z])+))*(\\s)*$", tittle)) {
+            return true;
+        } else {
+            throw new BadRequestException("Title is invalid!");
+        }
+    }
+
+    protected boolean isPlaylistExist(String name){
+        if (playlistRepository.findAllByName(name).size() > 0){
+            throw new BadRequestException("Playlist with this name already exist!");
+        }else {
+            return false;
+        }
+    }
+
+    private boolean validationWithRegex(String regex, String object) {
+        String regex1 = regex;
+        Pattern pattern = Pattern.compile(regex1);
+        Matcher matcher = pattern.matcher(object);
+        return matcher.matches();
+    }
+
 
     protected boolean firstNValidation(String firstN) {
         if (firstN == null) {
             return true;
         }
-        String regex = "^[A-Za-z]{2,29}$";
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(firstN);
-        boolean isMatching = m.matches();
-        if (!firstN.isBlank() && isMatching) {
+        if (validationWithRegex("^[A-Za-z]{2,29}$", firstN)) {
             return true;
         } else {
             throw new BadRequestException("First name is invalid!");
@@ -75,11 +95,7 @@ public class Utility {
         if (lastN == null) {
             return true;
         }
-        String regex = "^[A-Za-z]{2,29}$";
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(lastN);
-        boolean isMatching = m.matches();
-        if (!lastN.isBlank() && isMatching) {
+        if (validationWithRegex("^[A-Za-z]{2,29}$", lastN)) {
             return true;
         } else {
             throw new BadRequestException("Last name is invalid!");
@@ -87,10 +103,7 @@ public class Utility {
     }
 
     protected boolean birthDayValidation(LocalDate localDate) {
-        Pattern p = Pattern.compile("([0-9]{4})-([0-9]{2})-([0-9]{2})");
-        Matcher m = p.matcher(localDate.toString());
-        boolean isMatching = m.matches();
-        if (isMatching && localDate.compareTo(LocalDate.now()) < 0) {
+        if (validationWithRegex("([0-9]{4})-([0-9]{2})-([0-9]{2})", localDate.toString()) && localDate.compareTo(LocalDate.now()) < 0) {
             return true;
         } else {
             throw new BadRequestException("Invalid birthday! Check it out!");
@@ -107,7 +120,6 @@ public class Utility {
     }
 
     protected boolean userNameValidation(String username) {
-        String regex = "^[a-zA-Z0-9_.]{5,30}$";
         char[] numbers = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
         boolean hasNumbers = false;
         for (int i = 0; i < numbers.length; i++) {
@@ -115,10 +127,7 @@ public class Utility {
                 hasNumbers = true;
             }
         }
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(username);
-        boolean isMatching = m.matches();
-        if (username != null && !username.isBlank() && isMatching && !username.startsWith(".") &&
+        if (validationWithRegex("^[a-zA-Z0-9_.]{5,30}$", username) && !username.startsWith(".") &&
                 !username.startsWith("_") && !hasNumbers) {
             return true;
         } else {
@@ -129,11 +138,7 @@ public class Utility {
     }
 
     protected boolean userPasswordValidation(String ps1, String ps2) {
-        String regex = "^(?=\\P{Ll}*\\p{Ll})(?=\\P{Lu}*\\p{Lu})(?=\\P{N}*\\p{N})(?=[\\p{L}\\p{N}]*[^\\p{L}\\p{N}])[\\s\\S]{8,50}$";
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(ps1);
-        boolean isMatching = m.matches();
-        if (ps1 != null && ps2 != null && isMatching) {
+        if (validationWithRegex("^(?=\\P{Ll}*\\p{Ll})(?=\\P{Lu}*\\p{Lu})(?=\\P{N}*\\p{N})(?=[\\p{L}\\p{N}]*[^\\p{L}\\p{N}])[\\s\\S]{8,50}$", ps1)) {
             if (ps1.equals(ps2)) {
                 return true;
             } else {
@@ -186,10 +191,8 @@ public class Utility {
     }
 
     protected boolean emailValidation(String email) {
-        Pattern p = Pattern.compile("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$", Pattern.CASE_INSENSITIVE);
-        Matcher m = p.matcher(email);
-        boolean isMatching = m.matches();
-        if (isMatching) {
+        if (validationWithRegex("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$", email)
+                && email.startsWith("_") && email.startsWith("-")) {
             return true;
         } else {
             throw new BadRequestException("Email is invalid! Check it out!");
@@ -200,10 +203,7 @@ public class Utility {
         if (address == null) {
             return true;
         }
-        Pattern p = Pattern.compile("^[#.0-9a-zA-Z\\s,-]+$");
-        Matcher m = p.matcher(address);
-        boolean isMatching = m.matches();
-        if (isMatching) {
+        if (validationWithRegex("^[#.0-9a-zA-Z\\s,-]+$", address)) {
             return true;
         } else {
             throw new BadRequestException("Invalid address!");
@@ -214,10 +214,7 @@ public class Utility {
         if (country == null) {
             return true;
         }
-        Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z\\s-]+[a-zA-Z]$");
-        Matcher matcher = pattern.matcher(country);
-        boolean isMatching = matcher.matches();
-        if (isMatching) {
+        if (validationWithRegex("^[a-zA-Z][a-zA-Z\\s-]+[a-zA-Z]$", country)) {
             return true;
         } else {
             throw new BadRequestException("Invalid country");
@@ -228,10 +225,7 @@ public class Utility {
         if (city == null) {
             return true;
         }
-        Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z\\s-]+[a-zA-Z]$");
-        Matcher matcher = pattern.matcher(city);
-        boolean isMatching = matcher.matches();
-        if (isMatching) {
+        if (validationWithRegex("^[a-zA-Z][a-zA-Z\\s-]+[a-zA-Z]$", city)) {
             return true;
         } else {
             throw new BadRequestException("Invalid city");
@@ -243,12 +237,11 @@ public class Utility {
             throw new BadRequestException("Image can not be more then 5MB!");
         } else {
             if (!file.getContentType().startsWith("image/")) {
-            throw new BadRequestException("Only images are allowed here!");
-        } else {
+                throw new BadRequestException("Only images are allowed here!");
+            } else {
                 return true;
             }
 
         }
     }
-
 }

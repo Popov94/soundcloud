@@ -20,6 +20,8 @@ public class AbstractService {
     protected ModelMapper modelMapper;
     @Autowired
     protected PlaylistRepository playlistRepository;
+    @Autowired
+    protected Utility utility;
 
     public User findUserById(long userId){
         return userRepository.findById(userId).orElseThrow(()-> new NotFoundException("User does not exist!"));
