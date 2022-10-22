@@ -25,5 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
 
-    User getUserByUsername(String username);
+//    public User findUserById(long id);
+    public User getUserByUsername(String username);
+//    TODO refactor in songService
 }

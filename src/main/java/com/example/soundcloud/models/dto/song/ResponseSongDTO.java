@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class ResponseSongDTO {
-
     private long id;
     private String title;
     private String genre;

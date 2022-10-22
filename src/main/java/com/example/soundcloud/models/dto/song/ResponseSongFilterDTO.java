@@ -19,14 +19,14 @@ public class ResponseSongFilterDTO {
     private LocalDateTime uploadedAt;
     private int comments;
 
-    public ResponseSongFilterDTO(Song song) {
-        this.title = song.getTitle();
-        this.uploader = song.getUploader().getUsername();
-        this.songId = (int) song.getId();
-        this.listened = song.getListened();
-//        this.likes = song.getLikedUsers().size();
-//        this.dislikes = song.getDislikedUsers().size();
-        this.uploadedAt = song.getCreatedAt();
+//    public ResponseSongFilterDTO(Song song) {
+//        this.title = song.getTitle();
+//        this.uploader = song.getUploader().getUsername();
+//        this.songId = (int) song.getId();
+//        this.listened = song.getListened();
+////        this.likes = song.getLikedUsers().size();
+////        this.dislikes = song.getDislikedUsers().size();
+//        this.uploadedAt = song.getCreatedAt();
 //        this.comments = song.getComments().size();
-    }
+//    }
 }

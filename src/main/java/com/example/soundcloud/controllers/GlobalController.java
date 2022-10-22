@@ -64,7 +64,7 @@ public abstract class GlobalController {
     }
 
     private ErrorDTO buildErrorInfo(Exception e, HttpStatus status) {
-        e.printStackTrace(); //TODO add to log file
+        e.printStackTrace();
         ErrorDTO dto = new ErrorDTO();
         dto.setStatusCode(status.value());
         dto.setMessage(e.getMessage());

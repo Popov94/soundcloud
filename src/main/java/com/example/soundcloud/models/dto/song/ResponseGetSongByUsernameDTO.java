@@ -5,13 +5,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class SongWithoutUserDTO {
-    private long id;
+public class ResponseGetSongByUsernameDTO {
     private String title;
-    private String genre;
-    String artist;
+    private int songId;
     private int listened;
-    private String url;
+    private int likes;
+    private int dislikes;
     private LocalDateTime createdAt;
-    private String description;
+    private int comments;
 }

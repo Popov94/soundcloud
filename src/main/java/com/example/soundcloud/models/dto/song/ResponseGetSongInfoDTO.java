@@ -28,20 +28,5 @@ public class ResponseGetSongInfoDTO {
         // TODO creating UserDTO and CommentDTO.
 
 
-    public ResponseGetSongInfoDTO(Song songById) {
-        this.id = (int) songById.getId();
-        this.title = songById.getTitle();
-        this.genre = songById.getGenre();
-        this.artist = songById.getArtist();
-        this.url = songById.getUrl();
-        this.createdAt = songById.getCreatedAt();
-        this.listened = songById.getListened();
-        this.description = songById.getDescription();
-//        this.likedUsers = new ArrayList<>();
-//        this.dislikedUsers = new ArrayList<>();
-//        this.comments = new ArrayList<>();
-
-//         TODO iterating likes,dislikes and comments and add in the lists.
-    }
 
 }

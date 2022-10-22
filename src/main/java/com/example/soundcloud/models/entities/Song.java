@@ -1,7 +1,5 @@
 package com.example.soundcloud.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 
 
@@ -37,11 +35,10 @@ public class Song {
         private User uploader;
 
 //        @OneToMany(mappedBy = "song")
-//
 //        private List<Comment> comments;
 
-//        @ManyToMany(mappedBy = "songsInPlaylist")
-//        private List<Playlist> playlist;
+        @ManyToMany(mappedBy = "songsInPlaylist")
+        private List<Playlist> playlist;
 
         @ManyToMany(mappedBy = "likedSongs")
         private List<User> likers;
