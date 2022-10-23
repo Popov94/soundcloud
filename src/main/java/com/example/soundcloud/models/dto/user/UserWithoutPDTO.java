@@ -26,5 +26,4 @@ public class UserWithoutPDTO {
     private String profileImageUrl;
     private boolean isVerified;
 
-
 }

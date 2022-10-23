@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class PlaylistWithoutOwnerDTO {
 
-    private int id;
+    private long id;
     private String name;
     private LocalDateTime createdAt;
 

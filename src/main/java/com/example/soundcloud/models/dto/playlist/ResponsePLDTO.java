@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 public class ResponsePLDTO {
 
-    private int id;
+    private long id;
     private String name;
     private UserWithoutPDTO owner;
     private LocalDateTime createdAt;

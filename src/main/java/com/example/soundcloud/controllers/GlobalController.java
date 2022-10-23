@@ -5,6 +5,7 @@ import com.example.soundcloud.models.dto.ErrorDTO;
 import com.example.soundcloud.models.exceptions.*;
 import com.example.soundcloud.models.repositories.PlaylistRepository;
 import com.example.soundcloud.models.repositories.UserRepository;
+import com.example.soundcloud.service.CommentService;
 import com.example.soundcloud.service.PlaylistService;
 import com.example.soundcloud.service.SongService;
 import com.example.soundcloud.service.UserService;
@@ -38,6 +39,8 @@ public abstract class GlobalController {
     protected UserService userService;
     @Autowired
     protected SongService songService;
+    @Autowired
+    protected CommentService commentService;
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

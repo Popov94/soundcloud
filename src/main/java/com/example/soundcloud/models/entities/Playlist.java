@@ -12,6 +12,9 @@ import java.util.List;
 @Table(name = "playlists")
 public class Playlist {
 
+    public Playlist(){
+
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +23,7 @@ public class Playlist {
     private String name;
     @ManyToOne
     @JoinColumn(name = "owner_id")
-    private User owner;
+    private User playlistOwner;
     @Column
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

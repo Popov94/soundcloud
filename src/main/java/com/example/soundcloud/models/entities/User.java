@@ -67,10 +67,24 @@ public class User {
     private List<User> following;
     @ManyToMany(mappedBy = "following")
     private List<User> followers;
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(mappedBy = "playlistOwner")
     private List<Playlist> playlists;
-
-
+    @OneToMany(mappedBy = "commentOwner")
+    private List<Comment> comments;
+    @ManyToMany
+    @JoinTable(
+            name = "users_likes_songs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "song_id")
+    )
+    List<Song> likedSongs;
+    @ManyToMany
+    @JoinTable(
+            name = "users_dislike_songs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "song_id")
+    )
+    List<Song> dislikedSongs;
 
 
 //    TODO to create OneToMany relationship for User-songs - done
@@ -80,20 +94,5 @@ public class User {
 
 
     //TODO to create ManyToMany relationship with Songs for Like/Dislike
-    @ManyToMany
-    @JoinTable(
-            name = "users_likes_songs",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "song_id")
-    )
-    List<Song> likedSongs;
-
-    @ManyToMany
-    @JoinTable(
-            name = "users_dislike_songs",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "song_id")
-    )
-    List<Song> dislikedSongs;
 
 }

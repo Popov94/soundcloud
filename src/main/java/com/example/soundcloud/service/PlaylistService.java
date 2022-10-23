@@ -30,7 +30,7 @@ public class PlaylistService extends AbstractService {
         if (utility.PlaylistNameValidation(dto.getName()) && !utility.isPlaylistExist(dto.getName())) {
             User user = findUserById(userId);
             Playlist playlist = modelMapper.map(dto, Playlist.class);
-            playlist.setOwner(user);
+            playlist.setPlaylistOwner(user);
             playlist.setCreatedAt(LocalDateTime.now());
             playlistRepository.save(playlist);
             ResponsePLDTO respDTO = modelMapper.map(playlist, ResponsePLDTO.class);
@@ -46,7 +46,7 @@ public class PlaylistService extends AbstractService {
         User owner = findUserById(userId);
         Playlist playlist = findPlaylistById(playlistId);
         Song song = findSongById(songId);
-        if (owner.getId() != playlist.getOwner().getId()) {
+        if (owner.getId() != playlist.getPlaylistOwner().getId()) {
             throw new BadRequestException("Only owner of playlist can add songs. Create your own one to manage it!");
         }
         boolean isHere = false;
@@ -69,7 +69,7 @@ public class PlaylistService extends AbstractService {
     public String deletePlaylist(long playlistId, long userId) {
         User owner = findUserById(userId);
         Playlist playlist = findPlaylistById(playlistId);
-        if (owner.getId() == playlist.getOwner().getId()) {
+        if (owner.getId() == playlist.getPlaylistOwner().getId()) {
             playlistRepository.delete(playlist);
             return playlist.getName() + " was successfully deleted!";
         } else {
@@ -81,7 +81,7 @@ public class PlaylistService extends AbstractService {
         Playlist playlist = findPlaylistById(playlistId);
         Song song = findSongById(songId);
         User owner = findUserById(userId);
-        if (owner.getId() != playlist.getOwner().getId()) {
+        if (owner.getId() != playlist.getPlaylistOwner().getId()) {
             throw new BadRequestException("Only owner of playlist can remove songs. Create your own one to manage it!");
         }
         boolean isHere = false;

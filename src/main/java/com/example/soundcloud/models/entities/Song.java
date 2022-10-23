@@ -12,6 +12,10 @@ import java.util.List;
 @Table(name = "songs")
 public class Song {
 
+        public Song(){
+
+        }
+
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
@@ -32,9 +36,8 @@ public class Song {
         @ManyToOne
         @JoinColumn(name = "uploader_id")
         private User uploader;
-
-//        @OneToMany(mappedBy = "song")
-//        private List<Comment> comments;
+        @OneToMany(mappedBy = "commentedSong")
+        private List<Comment> comments;
 
         @ManyToMany(mappedBy = "songsInPlaylist")
         private List<Playlist> playlist;

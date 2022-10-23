@@ -1,9 +1,11 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.entities.Comment;
 import com.example.soundcloud.models.entities.Playlist;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.NotFoundException;
+import com.example.soundcloud.models.repositories.CommentRepository;
 import com.example.soundcloud.models.repositories.PlaylistRepository;
 import com.example.soundcloud.models.repositories.SongRepository;
 import com.example.soundcloud.models.repositories.UserRepository;
@@ -21,6 +23,8 @@ public class AbstractService {
     @Autowired
     protected PlaylistRepository playlistRepository;
     @Autowired
+    protected CommentRepository commentRepository;
+    @Autowired
     protected Utility utility;
 
     public User findUserById(long userId){
@@ -32,7 +36,11 @@ public class AbstractService {
     }
 
     public Playlist findPlaylistById(long playlistId){
-        return playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException("Playlist does not exist"));
+        return playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException("Playlist does not exist!"));
+    }
+
+    public Comment findCommentById(long commentId){
+        return commentRepository.findById(commentId).orElseThrow(() ->new NotFoundException("Comment does not exist!"));
     }
 
 
