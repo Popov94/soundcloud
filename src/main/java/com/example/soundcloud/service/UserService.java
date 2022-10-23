@@ -13,6 +13,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,7 +25,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -214,8 +217,8 @@ public class UserService extends AbstractService {
         Optional<User> optionalUser = userRepository.findUserByVerificationCode(dto.getCode());
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            if (user.isVerified()){
-                throw  new BadRequestException("You already verified yourself!");
+            if (user.isVerified()) {
+                throw new BadRequestException("You already verified yourself!");
             }
             user.setVerified(true);
             userRepository.save(user);
@@ -250,10 +253,15 @@ public class UserService extends AbstractService {
         if (followedId == followerId) {
             throw new BadRequestException("You can not follow yourself!");
         }
+        boolean isHere = false;
         for (Long l : userRepository.getFollowingUsersIds(followerId)) {
             if (l.equals(followedId)) {
-                throw new BadRequestException("You already followed this user!");
+                isHere = true;
+                break;
             }
+        }
+        if (isHere){
+            throw new BadRequestException("You already followed this user!");
         }
         follower.getFollowing().add(followedUser);
         userRepository.save(follower);
@@ -261,19 +269,21 @@ public class UserService extends AbstractService {
     }
 
     public String unfollowUser(long followerId, long followedId) {
-        if (followedId == followerId){
-            throw new BadRequestException("You can not unfollow yourself!");
-        }
-
-        for (Long l : userRepository.getFollowingUsersIds(followerId)){
-            if (!l.equals(followedId)){
-                System.out.println(l);
-                throw new BadRequestException("You can not unfollow user which u are not following");
-            }
-        }
-        System.out.println("zashto");
         User followedUser = findUserById(followedId);
         User follower = findUserById(followerId);
+        if (followedId == followerId) {
+            throw new BadRequestException("You can not unfollow yourself!");
+        }
+        boolean isHere = false;
+        for (Long l : userRepository.getFollowingUsersIds(followerId)) {
+            if (l.equals(followedId)) {
+                isHere = true;
+                break;
+            }
+        }
+        if (!isHere) {
+            throw new BadRequestException("You can not unfollow user that u are not following");
+        }
         follower.getFollowing().remove(followedUser);
         userRepository.save(follower);
         return "You have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();

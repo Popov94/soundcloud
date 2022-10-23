@@ -4,6 +4,7 @@ import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @RestController
 public class PlaylistController extends GlobalController {
@@ -14,29 +15,43 @@ public class PlaylistController extends GlobalController {
         return playlistService.getPlaylistById(playlistId);
     }
 
+    @GetMapping("/playlist")
+    public List<ResponsePLDTO> getAllPlaylists(){
+        return playlistService.getAllPlaylists();
+    }
+
+    @GetMapping("/playlist/search/n/{playlistName}")
+    public List<ResponsePLDTO> searchPlaylistsByName(@PathVariable String playlistName){
+        return playlistService.searchPlayListByName(playlistName);
+    }
+
+    @GetMapping("/playlist/search/o/{ownerName}")
+    public List<ResponsePLDTO> searchPlaylistByUsernamesOwner(@PathVariable String ownerName){
+        return playlistService.searchPlaylistByUsernamesOwner(ownerName);
+    }
+
     @PostMapping("/playlist")
     public ResponsePLDTO createPlayList(@RequestBody ResponsePLDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return playlistService.createPlayList(dto, userId);
     }
 
-    //TODO validations(is logged user owner of this playlist)
     @DeleteMapping("playlist/{playlistId}")
     public String deletePlaylist(@PathVariable long playlistId, HttpServletRequest req) {
-        getLoggedUserId(req);
-        return playlistService.deletePlaylist(playlistId);
+        long userId = getLoggedUserId(req);
+        return playlistService.deletePlaylist(playlistId, userId);
     }
 
-    //TODO validations(is song already added in this list)
     @PostMapping("/playlist/{playlistId}/{songId}")
     public ResponsePLDTO addSongInPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req) {
-        getLoggedUserId(req);
-        return playlistService.addSongInPlaylist(playlistId, songId);
+        long userId = getLoggedUserId(req);
+        return playlistService.addSongInPlaylist(playlistId, songId, userId);
     }
+
     //TODO validations
     @PutMapping("/playlist/{playlistId}/{songId}")
-    public ResponsePLDTO removeSongFromPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req){
-        getLoggedUserId(req);
-        return playlistService.removeSongFromPlayList(playlistId, songId);
+    public ResponsePLDTO removeSongFromPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req) {
+        long userId = getLoggedUserId(req);
+        return playlistService.removeSongFromPlayList(playlistId, songId, userId);
     }
 }
