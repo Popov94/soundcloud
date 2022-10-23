@@ -1,5 +1,7 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.dto.DislikeDTO;
+import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.comment.CommentWithoutSong;
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.comment.ResponseCommentDTO;
@@ -81,5 +83,49 @@ public class CommentService extends AbstractService {
         return commentsDTO;
     }
 
+
+
+    public LikeDTO like(long cid, long uid) {
+        Comment comment = commentRepository.findCommentById(cid);
+        User user = findUserById(uid);
+        if (user.getLikedComments().contains(comment)) {
+            user.getLikedComments().remove(comment);
+            userRepository.save(user);
+            return new LikeDTO("Your like was successfully removed!", comment.getCommentLikers().size());
+        } else {
+            user.getLikedComments().add(comment);
+            userRepository.save(user);
+            return new LikeDTO("Your like was successfully accepted!", comment.getCommentLikers().size());
+        }
+    }
+
+    public DislikeDTO dislike(long cid, long uid) {
+        Comment comment = commentRepository.findCommentById(cid);
+        User user = findUserById(uid);
+        if (user.getDislikedComments().contains(comment)) {
+            user.getDislikedComments().remove(comment);
+            userRepository.save(user);
+            return new DislikeDTO("Your dislike was successfully removed!", comment.getCommentDislikers().size());
+        } else {
+            user.getDislikedComments().add(comment);
+            userRepository.save(user);
+            return new DislikeDTO("Your dislike was successfully accepted!", comment.getCommentDislikers().size());
+        }
+    }
+    public void isCommentDisliked(long cid, long uid) {
+        Comment comment = commentRepository.findCommentById(cid);
+        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
+        if (comment.getCommentDislikers().contains(currentUser)){
+            currentUser.getDislikedComments().remove(comment);
+        }
+    }
+
+    public void isCommentLiked(long cid, long uid) {
+        Comment comment = commentRepository.findCommentById(cid);
+        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
+        if (comment.getCommentLikers().contains(currentUser)){
+            currentUser.getLikedComments().remove(comment);
+        }
+    }
     //TODO fix bug bcs one time shows im verified and one time not
 }

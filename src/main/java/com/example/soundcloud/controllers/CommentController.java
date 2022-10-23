@@ -1,5 +1,7 @@
 package com.example.soundcloud.controllers;
 
+import com.example.soundcloud.models.dto.DislikeDTO;
+import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.comment.CommentWithoutSong;
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.comment.ResponseCommentDTO;
@@ -34,5 +36,18 @@ public class CommentController extends GlobalController {
             return commentService.getSongComments(songId);
     }
 
+    @PostMapping("/soundcloud/{cid}/like")
+    public LikeDTO like(@PathVariable long cid, HttpServletRequest request) {
+        long uid = getLoggedUserId(request);
+        this.commentService.isCommentDisliked(cid, uid);
+        return commentService.like(cid, uid);
+    }
+
+    @PostMapping("/soundcloud/{cid}/dislike")
+    public DislikeDTO dislike(@PathVariable long cid, HttpServletRequest request) {
+        long uid = getLoggedUserId(request);
+        this.commentService.isCommentLiked(cid, uid);
+        return commentService.dislike(cid, uid);
+    }
 
 }

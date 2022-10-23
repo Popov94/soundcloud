@@ -10,5 +10,5 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class DislikeDTO {
     private String message;
-    private int updatedLikes;
+    private int updatedDislikes;
 }
