@@ -3,6 +3,7 @@ package com.example.soundcloud.controllers;
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.comment.CommentWithoutSong;
+import com.example.soundcloud.models.dto.comment.CommentedCommentDTO;
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.comment.ResponseCommentDTO;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,12 @@ public class CommentController extends GlobalController {
         return commentService.createComment(songId, userId, dto);
     }
 
+    @PostMapping("/soundcloud/{songId}/comment/{commentId}")
+    public CommentedCommentDTO commentComment(@RequestBody CreateCommentDTO dto, @PathVariable long songId, @PathVariable long commentId, HttpServletRequest req) {
+        long userId = getLoggedUserId(req);
+        return commentService.commentComment(songId, userId, dto,commentId);
+    }
+
     @PutMapping("/soundcloud/{songId}/{commentId}")
     public ResponseCommentDTO editComment(@RequestBody CreateCommentDTO dto, @PathVariable long songId, HttpServletRequest req, @PathVariable long commentId) {
         long userId = getLoggedUserId(req);
@@ -32,8 +39,8 @@ public class CommentController extends GlobalController {
     }
 
     @GetMapping("/soundcloud/{songId}")
-    public List<CommentWithoutSong> getSongComments(@PathVariable long songId     ) {
-            return commentService.getSongComments(songId);
+    public List<CommentWithoutSong> getSongComments(@PathVariable long songId) {
+        return commentService.getSongComments(songId);
     }
 
     @PostMapping("/soundcloud/{cid}/like")

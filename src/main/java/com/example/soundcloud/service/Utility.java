@@ -192,7 +192,7 @@ public class Utility {
 
     protected boolean emailValidation(String email) {
         if (validationWithRegex("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$", email)
-                && email.startsWith("_") && email.startsWith("-")) {
+                && !email.startsWith("_") && !email.startsWith("-")) {
             return true;
         } else {
             throw new BadRequestException("Email is invalid! Check it out!");

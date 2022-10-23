@@ -1,6 +1,8 @@
 package com.example.soundcloud.models.entities;
 
+import com.example.soundcloud.models.dto.comment.CommentedCommentDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -29,13 +31,13 @@ public class Comment {
     private LocalDateTime createdAt;
     @Column
     private String text;
-
-
     @ManyToMany(mappedBy = "likedComments")
     private List<User> commentLikers;
-
     @ManyToMany(mappedBy = "dislikedComments")
     private List<User> commentDislikers;
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Comment commentedComment;
 
 
 }

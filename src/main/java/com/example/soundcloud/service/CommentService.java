@@ -3,6 +3,7 @@ package com.example.soundcloud.service;
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.comment.CommentWithoutSong;
+import com.example.soundcloud.models.dto.comment.CommentedCommentDTO;
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.comment.ResponseCommentDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutComment;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @Service
 public class CommentService extends AbstractService {
 
+    //todo validation 
     public ResponseCommentDTO createComment(long songId, long userId, CreateCommentDTO dto) {
         User user = findUserById(userId);
         Song song = findSongById(songId);
@@ -127,5 +129,24 @@ public class CommentService extends AbstractService {
             currentUser.getLikedComments().remove(comment);
         }
     }
+
+    //todo validations
+    public CommentedCommentDTO commentComment(long songId, long userId, CreateCommentDTO dto, long commentId) {
+        User user = findUserById(userId);
+        Song song = findSongById(songId);
+        Comment parentC = findCommentById(commentId);
+        Comment childC = new Comment();
+        childC.setText(dto.getText());
+        childC.setCommentedSong(parentC.getCommentedSong());
+        childC.setCreatedAt(LocalDateTime.now());
+        childC.setCommentOwner(user);
+        childC.setCommentedComment(parentC);
+        commentRepository.save(childC);
+        CommentedCommentDTO dtoCC = modelMapper.map(childC, CommentedCommentDTO.class);
+        dtoCC.setCommentOwner(modelMapper.map(dtoCC.getCommentOwner(), UserWithoutPDTO.class));
+        return dtoCC;
+
+    }
+
     //TODO fix bug bcs one time shows im verified and one time not
 }
