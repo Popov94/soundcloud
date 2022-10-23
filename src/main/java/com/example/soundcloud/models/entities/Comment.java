@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -30,7 +31,11 @@ public class Comment {
     private String text;
 
 
+    @ManyToMany(mappedBy = "likedComments")
+    private List<User> commentLikers;
 
+    @ManyToMany(mappedBy = "dislikedComments")
+    private List<User> commentDislikers;
 
 
 }

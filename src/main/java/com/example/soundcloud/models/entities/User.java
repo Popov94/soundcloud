@@ -86,6 +86,21 @@ public class User {
     )
     List<Song> dislikedSongs;
 
+    @ManyToMany
+    @JoinTable(
+            name = "users_like_comments",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "comment_id")
+    )
+    List<Comment> likedComments;
+    @ManyToMany
+    @JoinTable(
+            name = "users_dislike_comments",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "comment_id")
+    )
+    List<Comment> dislikedComments;
+
 
 //    TODO to create OneToMany relationship for User-songs - done
 //    TODO to create OneToMany relationship for User-Comments
