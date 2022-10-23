@@ -73,7 +73,7 @@ public class User {
     private List<Comment> comments;
     @ManyToMany
     @JoinTable(
-            name = "users_likes_songs",
+            name = "users_like_songs",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "song_id")
     )
