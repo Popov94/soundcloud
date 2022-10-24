@@ -1,5 +1,6 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.user.EditDTO;
 import com.example.soundcloud.models.dto.user.RegisterDTO;
 import com.example.soundcloud.models.exceptions.BadRequestException;
@@ -64,10 +65,10 @@ public class Utility {
         }
     }
 
-    protected boolean isPlaylistExist(String name){
-        if (playlistRepository.findAllByName(name).size() > 0){
+    protected boolean isPlaylistExist(String name) {
+        if (playlistRepository.findAllByName(name).size() > 0) {
             throw new BadRequestException("Playlist with this name already exist!");
-        }else {
+        } else {
             return false;
         }
     }
@@ -241,7 +242,18 @@ public class Utility {
             } else {
                 return true;
             }
+        }
+    }
 
+    protected boolean isTextValid(CreateCommentDTO dto){
+        if (!dto.getText().isBlank()) {
+            if (!(dto.getText().length() > 500)) {
+                return true;
+            } else {
+                throw new BadRequestException("Text can not be more then 1000 symbols!");
+            }
+        } else {
+            throw new BadRequestException("You can not leave empty comment. You can delete it instead!");
         }
     }
 }

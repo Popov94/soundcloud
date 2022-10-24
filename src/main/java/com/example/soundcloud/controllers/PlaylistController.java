@@ -1,5 +1,6 @@
 package com.example.soundcloud.controllers;
 
+import com.example.soundcloud.models.dto.playlist.CreatePlaylistDTO;
 import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class PlaylistController extends GlobalController {
     }
 
     @PostMapping("/playlist")
-    public ResponsePLDTO createPlayList(@RequestBody ResponsePLDTO dto, HttpServletRequest req) {
+    public ResponsePLDTO createPlayList(@RequestBody CreatePlaylistDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return playlistService.createPlayList(dto, userId);
     }
@@ -48,7 +49,6 @@ public class PlaylistController extends GlobalController {
         return playlistService.addSongInPlaylist(playlistId, songId, userId);
     }
 
-    //TODO validations
     @PutMapping("/playlist/{playlistId}/{songId}")
     public ResponsePLDTO removeSongFromPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req) {
         long userId = getLoggedUserId(req);

@@ -16,6 +16,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
@@ -40,15 +41,21 @@ public class UserService extends AbstractService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @SneakyThrows
+    @Transactional
     public UserWithoutPDTO register(RegisterDTO userDTO) {
         if (utility.validateRegistration(userDTO)) {
-            userDTO.setCreatedAt(LocalDateTime.now());
             User user = modelMapper.map(userDTO, User.class);
+            user.setCreatedAt(LocalDateTime.now());
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
             String verificationCode = RandomString.make(64);
             user.setVerificationCode(verificationCode);
-            sendVerificationEmail(user);
+            try {
+                sendVerificationEmail(user);
+            } catch (MessagingException e) {
+                throw new BadRequestException(e.getMessage(),e);
+            } catch (UnsupportedEncodingException e) {
+                throw new BadRequestException(e.getMessage(),e);
+            }
             userRepository.save(user);
             return modelMapper.map(user, UserWithoutPDTO.class);
         }
@@ -98,14 +105,9 @@ public class UserService extends AbstractService {
     }
 
     public UserWithoutPDTO getUserById(long id) {
-        Optional<User> optionalUser = userRepository.findById(id);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            UserWithoutPDTO dto = modelMapper.map(user, UserWithoutPDTO.class);
-            return dto;
-        } else {
-            throw new NotFoundException("User does not exist!");
-        }
+        User user = findUserById(id);
+        UserWithoutPDTO dto = modelMapper.map(user, UserWithoutPDTO.class);
+        return dto;
     }
 
     public List<UserWithoutPDTO> getAllUsers() {
@@ -153,7 +155,7 @@ public class UserService extends AbstractService {
             userRepository.deleteById(user.getId());
             return "User: " + user.getUsername() + " has been successfully deleted";
         } else {
-            throw new UnauthorizedException("Password does not match!");
+            throw new BadRequestException("Password does not match!");
         }
     }
 
@@ -260,7 +262,7 @@ public class UserService extends AbstractService {
                 break;
             }
         }
-        if (isHere){
+        if (isHere) {
             throw new BadRequestException("You already followed this user!");
         }
         follower.getFollowing().add(followedUser);

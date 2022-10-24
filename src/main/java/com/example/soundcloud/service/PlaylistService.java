@@ -1,5 +1,6 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.dto.playlist.CreatePlaylistDTO;
 import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
@@ -26,7 +27,7 @@ public class PlaylistService extends AbstractService {
 
     }
 
-    public ResponsePLDTO createPlayList(ResponsePLDTO dto, long userId) {
+    public ResponsePLDTO createPlayList(CreatePlaylistDTO dto, long userId) {
         if (utility.PlaylistNameValidation(dto.getName()) && !utility.isPlaylistExist(dto.getName())) {
             User user = findUserById(userId);
             Playlist playlist = modelMapper.map(dto, Playlist.class);
