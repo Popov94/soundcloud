@@ -1,14 +1,12 @@
 package com.example.soundcloud.models.dto.song;
 
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
-import com.example.soundcloud.models.entities.User;
 import lombok.Data;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
-public class SongWithoutComment {
+public class SongWithoutCommentDTO {
 
     private long id;
     private String title;

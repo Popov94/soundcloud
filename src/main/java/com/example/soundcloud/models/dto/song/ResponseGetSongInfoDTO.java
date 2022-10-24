@@ -13,7 +13,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 public class ResponseGetSongInfoDTO {
 
-    private int id;
+    private long id;
     private String title;
     private String genre;
     private String artist;

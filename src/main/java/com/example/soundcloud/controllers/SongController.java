@@ -9,11 +9,14 @@ import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.util.List;
 
 @RestController
@@ -40,7 +43,7 @@ public class SongController extends GlobalController {
     }
 
     @GetMapping("/{username}/liked")
-    public List<ResponseSongFilterDTO> searchLikedSongs(@PathVariable String username) {
+    public List<ResponseGetSongDTO> searchLikedSongs(@PathVariable String username) {
         return this.songService.searchLikedSongsByUser(username);
     }
 
@@ -49,18 +52,16 @@ public class SongController extends GlobalController {
         return this.songService.searchByGenre(genre);
     }
 
-    @GetMapping("by_filter/{filterType}")
-    public List<ResponseSongFilterDTO> filterSongs(@RequestBody RequestSongFilterDTO filterType) {
+    @PostMapping("/filter")
+    public List<ResponseSongFilterDTO> filterSongs(@RequestBody RequestSongFilterDTO filterType) throws SQLException {
         return this.songService.filterSongs(filterType);
     }
 
-
     //TODO to improve the method - return a List with songs where the titles contains a given String;
-    @GetMapping("/by_title")
-    public ResponseGetSongDTO searchByTitle(String title) {
+    @GetMapping("/by_title/{title}")
+    public ResponseGetSongDTO searchByTitle(@PathVariable String title) {
         return this.songService.searchByTitle(title);
     }
-
 
     @PostMapping("/{sid}/like")
     public LikeDTO like(@PathVariable long sid, HttpServletRequest request) {
@@ -76,28 +77,23 @@ public class SongController extends GlobalController {
         return songService.dislike(sid, uid);
     }
 
-
-
-    //TODO upload a song;
     @PostMapping("/upload")
     public ResponseSongUploadDTO upload(@RequestParam(value = "file") MultipartFile songFile, @RequestParam String title, @RequestParam String artist, @RequestParam String genre, @RequestParam String description, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
         return songService.uploadSong(uid, title, artist, genre, description, songFile);
     }
 
-
-    //TODO Delete a song;
     @DeleteMapping("/{sid}")
     public ResponseSongDeleteDTO delete(@PathVariable long sid, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
         return songService.deleteSong(uid, sid);
     }
 
-
-    //TODO edit info;
     @PutMapping("/{sid}")
     public ResponseGetSongInfoDTO editInfo(@PathVariable long sid, @RequestBody RequestSongEditDTO dto, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
         return songService.editSong(dto, userId, sid);
     }
+//TODO play song
+
 }

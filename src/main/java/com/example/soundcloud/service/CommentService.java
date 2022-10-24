@@ -6,7 +6,7 @@ import com.example.soundcloud.models.dto.comment.CommentWithoutSong;
 import com.example.soundcloud.models.dto.comment.CommentedCommentDTO;
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
 import com.example.soundcloud.models.dto.comment.ResponseCommentDTO;
-import com.example.soundcloud.models.dto.song.SongWithoutComment;
+import com.example.soundcloud.models.dto.song.SongWithoutCommentDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import com.example.soundcloud.models.entities.Comment;
@@ -40,7 +40,7 @@ public class CommentService extends AbstractService {
 
     private ResponseCommentDTO getResponseCommentDTO(Comment comment) {
         ResponseCommentDTO respDTO = modelMapper.map(comment, ResponseCommentDTO.class);
-        respDTO.setCommentedSong(modelMapper.map(comment.getCommentedSong(), SongWithoutComment.class));
+        respDTO.setCommentedSong(modelMapper.map(comment.getCommentedSong(), SongWithoutCommentDTO.class));
         respDTO.setCommentOwner(modelMapper.map(comment.getCommentOwner(), UserWithoutPDTO.class));
         respDTO.getCommentedSong().setUploader(modelMapper.map(respDTO.getCommentedSong().getUploader(), UserWithoutPDTO.class));
         return respDTO;

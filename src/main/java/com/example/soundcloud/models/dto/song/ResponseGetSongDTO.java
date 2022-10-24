@@ -3,13 +3,15 @@ package com.example.soundcloud.models.dto.song;
 import com.example.soundcloud.models.dto.user.DislikedUserDTO;
 import com.example.soundcloud.models.dto.user.LikedUserDTO;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 public class ResponseGetSongDTO {
-    private int id;
+    private long id;
     private String title;
     private String genre;
     private String artist;
@@ -19,6 +21,7 @@ public class ResponseGetSongDTO {
     private List<DislikedUserDTO> dislikers;
     private LocalDateTime createdAt;
     private String description;
-    private int comments;
-    private int uploaderId;
+//    private  List<Comment> comments;
+    //TODO how to take a list size;
+    private long uploaderId;
 }

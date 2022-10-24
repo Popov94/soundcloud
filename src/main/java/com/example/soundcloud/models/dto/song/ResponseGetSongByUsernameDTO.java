@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 @Data
 public class ResponseGetSongByUsernameDTO {
     private String title;
-    private int songId;
+    private long songId;
     private int listened;
     private int likes;
     private int dislikes;
     private LocalDateTime createdAt;
-    private int comments;
+//    private int comments;
 }

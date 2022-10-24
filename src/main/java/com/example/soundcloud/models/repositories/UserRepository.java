@@ -23,9 +23,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "SELECT following_id FROM followers WHERE follower_id = :followerId", nativeQuery = true)
     public List<Long> getFollowingUsersIds(@Param ("followerId") long followerId);
 
-
-
-//    public User findUserById(long id);
-    public User getUserByUsername(String username);
-//    TODO refactor in songService
 }
