@@ -100,7 +100,6 @@ public class SongService extends AbstractService {
     }
 
     public List<ResponseSongFilterDTO> filterSongs(RequestSongFilterDTO filterType) throws SQLException {
-
         String title = filterType.getTitle();
         if (title == null) {
             throw new BadRequestException("You can not search without a title!");
@@ -131,10 +130,10 @@ public class SongService extends AbstractService {
         switch (filterBy) {
             case "likes":
             case "dislikes":
-            case "date":
+            case "upload_date":
             case "listened":
             case "comments":
-                return songDAO.filter(title, filterBy, orderBy, page, 6);
+                return songDAO.filter(title, filterBy, orderBy, page, 5);
             default:
                 throw new BadRequestException("Invalid type of filter!");
         }
@@ -323,5 +322,12 @@ public class SongService extends AbstractService {
         } else {
             throw new BadRequestException("The artist is invalid! It may contains uppercase and lowercase letters, numbers and special characters as !$%^&*()!");
         }
+    }
+
+    public String play(long sid) {
+        Song song = findSongById(sid);
+        song.setListened(song.getListened()+1);
+        songRepository.save(song);
+        return song.getUrl();
     }
 }

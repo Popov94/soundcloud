@@ -10,6 +10,7 @@ import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -78,7 +79,9 @@ public class SongController extends GlobalController {
     }
 
     @PostMapping("/upload")
-    public ResponseSongUploadDTO upload(@RequestParam(value = "file") MultipartFile songFile, @RequestParam String title, @RequestParam String artist, @RequestParam String genre, @RequestParam String description, HttpServletRequest request) {
+    public ResponseSongUploadDTO upload(@RequestParam(value = "file") MultipartFile songFile, @RequestParam String title,
+                                        @RequestParam String artist, @RequestParam String genre,
+                                        @RequestParam String description, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
         return songService.uploadSong(uid, title, artist, genre, description, songFile);
     }
@@ -94,6 +97,9 @@ public class SongController extends GlobalController {
         long userId = getLoggedUserId(req);
         return songService.editSong(dto, userId, sid);
     }
-//TODO play song
 
+    @GetMapping("/{sid}/play")
+    public String playSong(@PathVariable long sid){
+        return songService.play(sid);
+    }
 }
