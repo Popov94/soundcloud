@@ -10,9 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RequestSongFilterDTO {
     private String title;
-    private String genre;
     private String filterBy;
     private String orderBy;
     private int page;
-//    TODO to implement logic for paging
 }

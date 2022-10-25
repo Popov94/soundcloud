@@ -31,7 +31,7 @@ public class FileController extends GlobalController{
         }
     }
 
-    @GetMapping("songs/download/{url}")
+    @GetMapping("songs/download/{songName}")
     public void downloadSong(@PathVariable String songName, HttpServletResponse response){
         File song = new File("uploadedSongs" + File.separator + songName);
         if(!song.exists()){

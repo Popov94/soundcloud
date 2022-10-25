@@ -35,6 +35,9 @@ public class Song {
         private LocalDateTime createdAt;
         @Column
         private String description;
+        private int likes;
+        private int dislikes;
+        private int quantityComments;
         @ManyToOne
         @JoinColumn(name = "uploader_id")
         private User uploader;

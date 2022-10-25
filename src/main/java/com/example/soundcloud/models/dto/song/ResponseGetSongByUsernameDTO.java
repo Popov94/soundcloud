@@ -11,6 +11,6 @@ public class ResponseGetSongByUsernameDTO {
     private int listened;
     private int likes;
     private int dislikes;
+    private int comments;
     private LocalDateTime createdAt;
-//    private int comments;
 }

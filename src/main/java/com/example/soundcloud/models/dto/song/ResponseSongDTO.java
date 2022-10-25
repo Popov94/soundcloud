@@ -20,5 +20,4 @@ public class ResponseSongDTO {
     private LocalDateTime createdAt;
     private String description;
     private UserWithoutPDTO uploader;
-    private List<CommentWithoutSong> comments;
 }

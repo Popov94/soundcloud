@@ -5,22 +5,20 @@ import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
+import com.example.soundcloud.models.dto.user.UserWithoutPWithSongsDTO;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
-import com.example.soundcloud.models.exceptions.UnauthorizedException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
 
-import javax.swing.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -50,53 +48,37 @@ public class SongService extends AbstractService {
     }
 
     public List<ResponseGetSongByUsernameDTO> searchByUploader(String username) {
-        if(utility.userNameValidation(username)) {
-            Optional<User> optionalUploader = this.userRepository.findUserByUsername(username);
-            if (optionalUploader.isPresent()) {
-                User user = optionalUploader.get();
-                List<Song> songs = songRepository.findAllByUploader(user);
-                if (songs.size() == 0) {
-                    throw new NotFoundException("This user has not uploaded any songs!");
-                }
-                return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongByUsernameDTO.class)).collect(Collectors.toList());
-            } else {
-                throw new NotFoundException("User: " + username + " doesnt exist!");
+        Optional<User> optionalUploader = this.userRepository.findUserByUsername(username);
+        if (optionalUploader.isPresent()) {
+            User user = optionalUploader.get();
+            List<Song> songs = songRepository.findAllByUploader(user);
+            if (songs.size() == 0) {
+                throw new NotFoundException("This user has not uploaded any songs!");
             }
-        }
-        else {
-            throw new BadRequestException("Username field is not filled up correctly! " +
-                    "Username can consist only letters, numbers and special symbos ``.`` , ``_``! " +
-                    "Usernane must start with letter!");
+            return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongByUsernameDTO.class)).collect(Collectors.toList());
+        } else {
+            throw new NotFoundException("User: " + username + " doesnt exist!");
         }
     }
 
     public List<ResponseGetSongDTO> searchLikedSongsByUser(String username) {
-        if(utility.userNameValidation(username)) {
-            Optional<User> optionalUser = this.userRepository.findUserByUsername(username);
-            if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
-                List<Song> songs = user.getLikedSongs();
-                if (songs.size() == 0) {
-                    throw new NotFoundException("This user has not liked any songs!");
-                }
-                return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
-            } else {
-                throw new NotFoundException("User: " + username + " doesnt exist!");
+        Optional<User> optionalUser = this.userRepository.findUserByUsername(username);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            List<Song> songs = user.getLikedSongs();
+            if (songs.size() == 0) {
+                throw new NotFoundException("This user has not liked any songs!");
             }
-        }
-        else {
-            throw new BadRequestException("Username field is not filled up correctly! " +
-                    "Username can consist only letters, numbers and special symbos ``.`` , ``_``! " +
-                    "Usernane must start with letter!");
+            return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
+        } else {
+            throw new NotFoundException("User: " + username + " doesnt exist!");
         }
     }
 
-    public ResponseGetSongDTO searchByTitle(String title) {
-        if (titleValidation(title)) {
-            Song song = songRepository.findSongByTitle(title);
-            return modelMapper.map(song, ResponseGetSongDTO.class);
-        }
-       throw new BadRequestException("The title is invalid!");
+    public List<ResponseGetSongDTO> searchByTitle(String title) {
+        List<Song> songs = songRepository.findSongByCharSequence(title).stream().collect(Collectors.toList());
+        List<ResponseGetSongDTO> songsDTO = songs.stream().map(song -> modelMapper.map(song,ResponseGetSongDTO.class)).collect(Collectors.toList());
+        return songsDTO;
     }
 
     public List<ResponseSongFilterDTO> filterSongs(RequestSongFilterDTO filterType) throws SQLException {
@@ -232,22 +214,25 @@ public class SongService extends AbstractService {
 
     public ResponseSongDeleteDTO deleteSong(long uid, long sid) {
         Song songToDelete = findSongById(sid);
-        User currentUser = findUserById(uid);
-        songRepository.delete(songToDelete);
-        userRepository.save(currentUser);
-        ResponseSongDeleteDTO dto = modelMapper.map(songToDelete, ResponseSongDeleteDTO.class);
-        dto.setMessage("Song deleted successfully!");
-        dto.setDeletedSongId(sid);
-        return dto;
+        User user = findUserById(uid);
+        if(user.getId() == songToDelete.getUploader().getId()){
+            File fileToDelete = new File(songToDelete.getUrl());
+            fileToDelete.delete();
+            songRepository.delete(songToDelete);
+            return new ResponseSongDeleteDTO("Song deleted successfully!", sid);
+        }
+        else{
+            throw new MethodNotAllowedException("The song that you are trying to delete was not uploaded by you!");
+        }
     }
 
 
-    public ResponseGetSongInfoDTO editSong(RequestSongEditDTO dto, long userId, long songId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new BadRequestException("User does not exist!"));
-        Song song = songRepository.findById(songId).orElseThrow(() -> new BadRequestException("Song does not exist!"));
+    public ResponseGetSongInfoDTO editSong(RequestSongEditDTO dto, long uid, long sid) {
+        User user = findUserById(uid);
+        Song song = findSongById(sid);
 
         if(songEditValidation(dto)) {
-            if (user.getSongs().contains(song)) {
+            if (user.getId() == song.getUploader().getId()) {
                 setSongEdit(dto, song);
                 songRepository.save(song);
                 return modelMapper.map(song, ResponseGetSongInfoDTO.class);
@@ -329,5 +314,16 @@ public class SongService extends AbstractService {
         song.setListened(song.getListened()+1);
         songRepository.save(song);
         return song.getUrl();
+    }
+
+
+
+    public ResponseGetSongInfoDTO getSongInfo(long sid) {
+        Song song = findSongById(sid);
+        ResponseGetSongInfoDTO dto = modelMapper.map(song,ResponseGetSongInfoDTO.class);
+        dto.setLikes(song.getLikers().size());
+        dto.setDislikes(song.getDislikers().size());
+        dto.setComments(song.getComments().size());
+        return dto;
     }
 }
