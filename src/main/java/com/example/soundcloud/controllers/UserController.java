@@ -6,13 +6,16 @@ import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import com.example.soundcloud.service.UserService;
 import jdk.jfr.ContentType;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.websocket.Session;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -44,7 +47,8 @@ public class UserController extends GlobalController {
     }
 
     @PostMapping("/auth")
-    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req) {
+    @SneakyThrows
+    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req, HttpServletResponse resp) {
         UserWithoutPDTO user = userService.login(dto);
         HttpSession session = req.getSession();
         if (session.getAttribute("LOGGED") != null) {
@@ -56,6 +60,9 @@ public class UserController extends GlobalController {
             logUser(req, user.getId());
             if (!userService.isUserVerified(user.getId())) {
                 session.invalidate();
+//                String[] text = user.getEmail().split("@");
+//                String url = "https://" + text[text.length-1];
+//                resp.sendRedirect(url);
                 throw new MethodNotAllowedException("You have to confirm your registration!");
             }
             return user;

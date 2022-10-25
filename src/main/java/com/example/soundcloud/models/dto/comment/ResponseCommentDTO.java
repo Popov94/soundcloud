@@ -1,7 +1,7 @@
 package com.example.soundcloud.models.dto.comment;
 
 import com.example.soundcloud.models.dto.song.ResponseSongDTO;
-import com.example.soundcloud.models.dto.song.SongWithoutComment;
+import com.example.soundcloud.models.dto.song.SongWithoutCommentDTO;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
@@ -14,7 +14,7 @@ public class ResponseCommentDTO {
 
     private long id;
     private UserWithoutPDTO commentOwner;
-    private SongWithoutComment commentedSong;
+    private SongWithoutCommentDTO commentedSong;
     private LocalDateTime createdAt;
     private String text;
 

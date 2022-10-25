@@ -1,6 +1,6 @@
 package com.example.soundcloud.models.dto.comment;
 
-import com.example.soundcloud.models.dto.song.SongWithoutComment;
+import com.example.soundcloud.models.dto.song.SongWithoutCommentDTO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,6 +11,6 @@ public class CommentWithoutOwner {
     private long id;
     private LocalDateTime createdAt;
     private String text;
-    private SongWithoutComment commentedSong;
+    private SongWithoutCommentDTO commentedSong;
 
 }

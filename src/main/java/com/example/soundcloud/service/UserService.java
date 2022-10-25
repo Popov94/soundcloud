@@ -205,6 +205,8 @@ public class UserService extends AbstractService {
         User user = findUserById(userId);
         File profileImage = new File(user.getProfileImageUrl());
         profileImage.delete();
+        user.setProfileImageUrl(null);
+        userRepository.save(user);
         return "Your profile picture has been removed!";
     }
 

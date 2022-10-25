@@ -105,6 +105,11 @@ public class Utility {
 
     protected boolean birthDayValidation(LocalDate localDate) {
         if (validationWithRegex("([0-9]{4})-([0-9]{2})-([0-9]{2})", localDate.toString()) && localDate.compareTo(LocalDate.now()) < 0) {
+            if (!(localDate.compareTo(LocalDate.now()) < -120)) {
+                System.out.println(localDate.compareTo(LocalDate.now()));
+            }else {
+                throw new BadRequestException("Our service is not allowed for ghosts");
+            }
             return true;
         } else {
             throw new BadRequestException("Invalid birthday! Check it out!");

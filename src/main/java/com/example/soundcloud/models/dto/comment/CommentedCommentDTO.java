@@ -1,6 +1,5 @@
 package com.example.soundcloud.models.dto.comment;
 
-import com.example.soundcloud.models.dto.song.SongWithoutComment;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import lombok.Data;
 
