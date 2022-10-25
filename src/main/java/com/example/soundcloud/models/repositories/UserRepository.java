@@ -22,5 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     public Optional<User> findUserByVerificationCode(String code);
     @Query(value = "SELECT following_id FROM followers WHERE follower_id = :followerId", nativeQuery = true)
     public List<Long> getFollowingUsersIds(@Param ("followerId") long followerId);
+    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 15 and users.verified = 0", nativeQuery = true)
+    public List<User> findAllNonVerifiedUser();
+    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 31 and users.verified = 0", nativeQuery = true)
+    public List<User> findAllNonVerifiedUserForDelete();
 
 }

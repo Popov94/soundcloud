@@ -13,6 +13,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,9 +55,9 @@ public class UserService extends AbstractService {
             try {
                 sendVerificationEmail(user);
             } catch (MessagingException e) {
-                throw new BadRequestException(e.getMessage(),e);
+                throw new BadRequestException(e.getMessage(), e);
             } catch (UnsupportedEncodingException e) {
-                throw new BadRequestException(e.getMessage(),e);
+                throw new BadRequestException(e.getMessage(), e);
             }
             userRepository.save(user);
             return modelMapper.map(user, UserWithoutPDTO.class);
@@ -81,6 +84,42 @@ public class UserService extends AbstractService {
         content = content.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
         helper.setText(content, true);
         mailSender.send(message);
+    }
+
+    @Scheduled(cron = "0 0 12 15 * *")
+    @Async
+    public void remindingEmailToConfirm() throws MessagingException, UnsupportedEncodingException {
+        List<User> users = userRepository.findAllNonVerifiedUser();
+        for (int i = 0; i < users.size(); i++) {
+            String toAddress = users.get(i).getEmail();
+            String fromAddress = "soundcloudtests14@gmail.com";
+            String senderName = "Sound Cloud";
+            String subject = "Remind you to verify your registration";
+            String content = "Dear [[name]], <br><br> \n" +
+                    "          Thank you for joining Sound Cloud! We want to" +
+                    " <b>remind you that you need to verify your account to confirm your identity.</b> \n" +
+                    "\n" + "<br><br> You will be able to use our services if you confirm your registration." +
+                    " In addition, your account would be deleted soon, after this email if you dont verify it</b>," +
+                    " Sound Cloud Team. \n";
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message);
+            helper.setFrom(fromAddress, senderName);
+            helper.setTo(toAddress);
+            helper.setSubject(subject);
+            content = content.replace("[[name]]", users.get(i).getFirstName() + " " + users.get(i).getLastName());
+            helper.setText(content, true);
+            mailSender.send(message);
+        }
+    }
+
+    @Scheduled(cron = "0 0 0 1 * *")
+    @Async
+    public void deleteNonVerifiedUsers() {
+        List<User> users = userRepository.findAllNonVerifiedUserForDelete();
+        for (int i = 0; i < users.size(); i++) {
+            userRepository.delete(users.get(i));
+        }
+        System.out.println(users);
     }
 
     public UserWithoutPDTO login(LoginDTO dto) {

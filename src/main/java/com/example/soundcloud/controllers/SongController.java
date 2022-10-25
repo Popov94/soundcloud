@@ -28,7 +28,6 @@ public class SongController extends GlobalController {
 
     @GetMapping("/{sid}")
     public ResponseSongDTO getSongWithUserById(@PathVariable long sid) {
-        System.out.println(sid);
         return songService.getSongWithUserById(sid);
     }
 
