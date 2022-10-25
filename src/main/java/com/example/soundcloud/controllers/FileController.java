@@ -30,4 +30,19 @@ public class FileController extends GlobalController{
             }
         }
     }
+
+    @GetMapping("songs/download/{url}")
+    public void downloadSong(@PathVariable String songName, HttpServletResponse response){
+        File song = new File("uploadedSongs" + File.separator + songName);
+        if(!song.exists()){
+            throw new NotFoundException("Song does not exist");
+        } else{
+            try {
+                response.setContentType(Files.probeContentType(song.toPath()));
+                Files.copy(song.toPath(),response.getOutputStream());
+            } catch (IOException e) {
+                throw new BadRequestException("Problem with output stream.");
+            }
+        }
+    }
 }
