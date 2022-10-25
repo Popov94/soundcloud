@@ -1,5 +1,6 @@
 package com.example.soundcloud.models.dto.song;
 
+import com.example.soundcloud.models.dto.user.UserInfoDTO;
 import com.example.soundcloud.models.entities.Song;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,12 +22,8 @@ public class ResponseGetSongInfoDTO {
     private LocalDateTime createdAt;
     private int listened;
     private String description;
-//    private List<UserDTO?> likedUsers;
-//    private List<UserDTO?> dislikedUsers;
-//    private List<CommentDTO?> comments;
-
-        // TODO creating UserDTO and CommentDTO.
-
-
-
+    private UserInfoDTO uploader;
+    private int likes;
+    private int dislikes;
+    private int comments;
 }

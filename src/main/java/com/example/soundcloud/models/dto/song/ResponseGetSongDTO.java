@@ -1,7 +1,5 @@
 package com.example.soundcloud.models.dto.song;
 
-import com.example.soundcloud.models.dto.user.DislikedUserDTO;
-import com.example.soundcloud.models.dto.user.LikedUserDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,11 +15,10 @@ public class ResponseGetSongDTO {
     private String artist;
     private String url;
     private int listened;
-    private List<LikedUserDTO> likers;
-    private List<DislikedUserDTO> dislikers;
+    private int likes;
+    private int dislikes;
+    private int comments;
     private LocalDateTime createdAt;
     private String description;
-//    private  List<Comment> comments;
-    //TODO how to take a list size;
     private long uploaderId;
 }
