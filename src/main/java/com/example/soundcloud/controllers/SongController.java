@@ -5,14 +5,13 @@ import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
 //import com.example.soundcloud.models.dto.user.EditDTO;
 //import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
-import com.example.soundcloud.models.dto.user.UserWithoutPWithSongsDTO;
-import com.example.soundcloud.models.entities.Song;
-import com.example.soundcloud.models.entities.User;
+import com.example.soundcloud.models.dto.user.APIResponse;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.data.domain.Page;
 //import org.springframework.jdbc.core.JdbcTemplate;
 //import org.springframework.security.core.parameters.P;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -99,7 +98,25 @@ public class SongController extends GlobalController {
     }
 
     @PutMapping("/{sid}/play")
-    public String playSong(@PathVariable long sid){
+    public String playSong(@PathVariable long sid) {
         return songService.play(sid);
     }
+
+
+    @GetMapping("/search/{offset}/{pageSize}/{sortedBy}")
+    public APIResponse<Page<ResponseSongDTO>> sortSongWithPagination(@PathVariable int offset, @PathVariable int pageSize,
+                                                                     @PathVariable String sortedBy) {
+        Page<ResponseSongDTO> pageDTO = songService.sortSongWithPagination(offset, pageSize, sortedBy);
+        return new APIResponse<>(pageDTO.getSize(), pageDTO);
+    }
+
+    @GetMapping("/search/{keyword}/{offset}/{pageSize}/{sortedBy}/{kindOfSort}")
+    public APIResponse<Page<ResponseSongDTO>> searchSong(@PathVariable String keyword, @PathVariable int offset,
+                                                         @PathVariable int pageSize, @PathVariable String sortedBy,
+                                                         @PathVariable String kindOfSort) {
+    Page<ResponseSongDTO> page = songService.searchSong(keyword,offset,pageSize,sortedBy,kindOfSort);
+    return new APIResponse<>(page.getSize(), page);
+
+    }
+
 }

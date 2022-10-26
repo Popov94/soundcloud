@@ -2,6 +2,7 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
+import org.hibernate.Session;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;

@@ -5,7 +5,6 @@ import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
-import com.example.soundcloud.models.dto.user.UserWithoutPWithSongsDTO;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
@@ -13,6 +12,7 @@ import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
@@ -31,17 +31,18 @@ import java.util.stream.Collectors;
 @Service
 public class SongService extends AbstractService {
 
-    private static final long MAX_FILESIZE = 100*1024*1024;
+    private static final long MAX_FILESIZE = 100 * 1024 * 1024;
 
     private final SongDAO songDAO;
+
     public SongService(SongDAO songDAO) {
         this.songDAO = songDAO;
     }
 
 
-    public List<ResponseGetSongDTO> searchByGenre(String genre){
+    public List<ResponseGetSongDTO> searchByGenre(String genre) {
         List<Song> songs = this.songRepository.findAllByGenre(genre);
-        if(songs.size() == 0) {
+        if (songs.size() == 0) {
             throw new NotFoundException("There is no musical content for genre: " + genre + ".");
         }
         return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
@@ -77,7 +78,7 @@ public class SongService extends AbstractService {
 
     public List<ResponseGetSongDTO> searchByTitle(String title) {
         List<Song> songs = songRepository.findSongByCharSequence(title).stream().collect(Collectors.toList());
-        List<ResponseGetSongDTO> songsDTO = songs.stream().map(song -> modelMapper.map(song,ResponseGetSongDTO.class)).collect(Collectors.toList());
+        List<ResponseGetSongDTO> songsDTO = songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
         return songsDTO;
     }
 
@@ -152,14 +153,15 @@ public class SongService extends AbstractService {
     public void isSongDisliked(long sid, long uid) {
         Song song = findSongById(sid);
         User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (song.getDislikers().contains(currentUser)){
+        if (song.getDislikers().contains(currentUser)) {
             currentUser.getDislikedSongs().remove(song);
         }
     }
+
     public void isSongLiked(long sid, long uid) {
         Song song = findSongById(sid);
         User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (song.getLikers().contains(currentUser)){
+        if (song.getLikers().contains(currentUser)) {
             currentUser.getLikedSongs().remove(song);
         }
     }
@@ -171,7 +173,7 @@ public class SongService extends AbstractService {
         return dto;
     }
 
-    public ResponseSongUploadDTO uploadSong(long uid,String title, String artist, String genre, String description, MultipartFile songFile) {
+    public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre, String description, MultipartFile songFile) {
 
         User currentUser = findUserById(uid);
         String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
@@ -215,13 +217,12 @@ public class SongService extends AbstractService {
     public ResponseSongDeleteDTO deleteSong(long uid, long sid) {
         Song songToDelete = findSongById(sid);
         User user = findUserById(uid);
-        if(user.getId() == songToDelete.getUploader().getId()){
+        if (user.getId() == songToDelete.getUploader().getId()) {
             File fileToDelete = new File(songToDelete.getUrl());
             fileToDelete.delete();
             songRepository.delete(songToDelete);
             return new ResponseSongDeleteDTO("Song deleted successfully!", sid);
-        }
-        else{
+        } else {
             throw new MethodNotAllowedException("The song that you are trying to delete was not uploaded by you!");
         }
     }
@@ -231,7 +232,7 @@ public class SongService extends AbstractService {
         User user = findUserById(uid);
         Song song = findSongById(sid);
 
-        if(songEditValidation(dto)) {
+        if (songEditValidation(dto)) {
             if (user.getId() == song.getUploader().getId()) {
                 setSongEdit(dto, song);
                 songRepository.save(song);
@@ -244,7 +245,7 @@ public class SongService extends AbstractService {
         }
     }
 
-    private void setSongEdit (RequestSongEditDTO dto, Song song) {
+    private void setSongEdit(RequestSongEditDTO dto, Song song) {
         song.setTitle(dto.getTitle());
         song.setArtist(dto.getArtist());
         song.setGenre(dto.getGenre());
@@ -252,11 +253,10 @@ public class SongService extends AbstractService {
     }
 
 
-
     protected boolean songUploadValidation(String title, String artist, String genre) {
         if (titleValidation(title) &&
                 artistValidation(artist) &&
-                genreValidation(genre)){
+                genreValidation(genre)) {
             return true;
         } else {
             throw new BadRequestException("Invalid song data!");
@@ -266,14 +266,14 @@ public class SongService extends AbstractService {
     protected boolean songEditValidation(RequestSongEditDTO song) {
         if (titleValidation(song.getTitle()) &&
                 artistValidation(song.getArtist()) &&
-                genreValidation(song.getGenre())){
+                genreValidation(song.getGenre())) {
             return true;
         } else {
             throw new BadRequestException("Invalid song data!");
         }
     }
 
-    protected boolean titleValidation(String title){
+    protected boolean titleValidation(String title) {
         String regex = "^[a-zA-Z0-9_ !$%^&*-`)(]{2,40}$";
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(title);
@@ -285,7 +285,7 @@ public class SongService extends AbstractService {
         }
     }
 
-    protected boolean genreValidation(String genre){
+    protected boolean genreValidation(String genre) {
         String regex = "^[A-Za-z\\s-]{2,29}$"; // it allows to use upper/lower case spaces and -
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(genre);
@@ -311,19 +311,41 @@ public class SongService extends AbstractService {
 
     public String play(long sid) {
         Song song = findSongById(sid);
-        song.setListened(song.getListened()+1);
+        song.setListened(song.getListened() + 1);
         songRepository.save(song);
         return song.getUrl();
     }
 
 
-
     public ResponseGetSongInfoDTO getSongInfo(long sid) {
         Song song = findSongById(sid);
-        ResponseGetSongInfoDTO dto = modelMapper.map(song,ResponseGetSongInfoDTO.class);
+        ResponseGetSongInfoDTO dto = modelMapper.map(song, ResponseGetSongInfoDTO.class);
         dto.setLikes(song.getLikers().size());
         dto.setDislikes(song.getDislikers().size());
         dto.setComments(song.getComments().size());
         return dto;
+    }
+
+    public Page<ResponseSongDTO> sortSongWithPagination(int offset, int pageSize, String sortedBy) {
+        Page<ResponseSongDTO> songs = songRepository
+                .findAll(PageRequest.of(offset, pageSize).withSort(Sort.by(sortedBy)))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class));
+        return songs;
+    }
+
+    public Page<ResponseSongDTO> searchSong(String keyword, int offset, int pageSize, String sortedBy, String kindOfSort) {
+        if (kindOfSort.equalsIgnoreCase("asc")) {
+            Page<ResponseSongDTO> dto = songRepository
+                    .findByKeyword(keyword, PageRequest.of(offset, pageSize)
+                            .withSort(Sort.by(sortedBy)))
+                    .map(song -> modelMapper.map(song, ResponseSongDTO.class));
+            return dto;
+        } else {
+            Page<ResponseSongDTO> dto = songRepository
+                    .findByKeyword(keyword, PageRequest.of(offset, pageSize)
+                            .withSort(Sort.by(sortedBy).descending()))
+                    .map(song -> modelMapper.map(song, ResponseSongDTO.class));
+            return dto;
+        }
     }
 }

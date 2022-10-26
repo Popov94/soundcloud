@@ -5,17 +5,17 @@ import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
-import com.example.soundcloud.models.exceptions.NotFoundException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
-import lombok.SneakyThrows;
 import net.bytebuddy.utility.RandomString;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.time.Period;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -330,5 +327,38 @@ public class UserService extends AbstractService {
         follower.getFollowing().remove(followedUser);
         userRepository.save(follower);
         return "You have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();
+    }
+
+//    @PostConstruct
+//    public void initDB() {
+//        List<User> users = IntStream.
+//                rangeClosed(1, 200).
+//                mapToObj(i -> new User("erkan2134!" + i, "Erkan1234!", "Erkan1234!",
+//                        "erkan2134" + i + "@gmail.com", LocalDate.now(), LocalDateTime.now(), "Male"))
+//                .collect(Collectors.toList());
+//        userRepository.saveAll(users);
+//    }
+
+
+    public Page<UserWithoutPDTO> findAllUsersWithPagination(int offset, int pageSize) {
+       Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize)).
+               map(user -> modelMapper.map(user,UserWithoutPDTO.class));
+       return users;
+    }
+
+    public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSorting(int offset, int pageSize, String sortedBy) {
+        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize).
+                withSort(Sort.by(sortedBy))).
+                map(user -> modelMapper.map(user,UserWithoutPDTO.class));
+        return users;
+
+    }
+
+    public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSortingDesc(int offset, int pageSize, String sortedBy) {
+        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize).
+                        withSort(Sort.by(sortedBy).descending())).
+                map(user -> modelMapper.map(user,UserWithoutPDTO.class));
+        return users;
+
     }
 }

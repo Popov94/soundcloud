@@ -18,6 +18,16 @@ public class User {
 
     }
 
+    public User(String username, String password, String confirmPassword, String email, LocalDate dateOfBirthday,
+                LocalDateTime createdAt, String gender) {
+        this.username = username;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
+        this.email = email;
+        this.dateOfBirthday = dateOfBirthday;
+        this.createdAt = createdAt;
+        this.gender = gender;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
