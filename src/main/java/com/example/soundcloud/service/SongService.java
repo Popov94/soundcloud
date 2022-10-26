@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 @Service
 public class SongService extends AbstractService {
 
+    public static final int SONGS_PER_PAGE = 5;
     private static final long MAX_FILESIZE = 100 * 1024 * 1024;
 
     private final SongDAO songDAO;
@@ -116,7 +117,7 @@ public class SongService extends AbstractService {
             case "upload_date":
             case "listened":
             case "comments":
-                return songDAO.filter(title, filterBy, orderBy, page, 5);
+                return songDAO.filter(title, filterBy, orderBy, page, SONGS_PER_PAGE);
             default:
                 throw new BadRequestException("Invalid type of filter!");
         }
@@ -347,5 +348,26 @@ public class SongService extends AbstractService {
                     .map(song -> modelMapper.map(song, ResponseSongDTO.class));
             return dto;
         }
+    }
+
+    public List<ResponseSongFilterDTO> topGenreSongsForUser(long uid, int page) throws SQLException {
+        if(page == 0) {
+            page = 1;
+        }
+        return songDAO.findSongsByGenreForUser(uid, page, SONGS_PER_PAGE);
+    }
+
+    public List<ResponseSongFilterDTO> topGenreSongs(int page) throws SQLException {
+        if(page == 0) {
+            page = 1;
+        }
+        return songDAO.findSongsByGenre(page, SONGS_PER_PAGE);
+    }
+
+    public List<ResponseSongFilterDTO> topListened(int page) throws SQLException {
+        if(page == 0) {
+            page = 1;
+        }
+        return songDAO.findTopListened( page, SONGS_PER_PAGE);
     }
 }

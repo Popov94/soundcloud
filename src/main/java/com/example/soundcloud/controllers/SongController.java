@@ -102,6 +102,21 @@ public class SongController extends GlobalController {
         return songService.play(sid);
     }
 
+    @GetMapping("/feed/top_genre_for_user/{page}")
+    public List<ResponseSongFilterDTO> topGenreSongsForUser(@PathVariable int page, HttpServletRequest req) throws SQLException {
+        long uid = getLoggedUserId(req);
+        return songService.topGenreSongsForUser(uid, page);
+    }
+
+    @GetMapping("/feed/top_genre/{page}")
+    public List<ResponseSongFilterDTO> topGenreSongs(@PathVariable int page) throws SQLException {
+        return songService.topGenreSongs(page);
+    }
+
+    @GetMapping("/feed/top_listened/{page}")
+    public List<ResponseSongFilterDTO> topTenListened(@PathVariable int page) throws SQLException {
+        return songService.topListened( page);
+    }
 
     @GetMapping("/search/{offset}/{pageSize}/{sortedBy}")
     public APIResponse<Page<ResponseSongDTO>> sortSongWithPagination(@PathVariable int offset, @PathVariable int pageSize,
@@ -118,5 +133,4 @@ public class SongController extends GlobalController {
     return new APIResponse<>(page.getSize(), page);
 
     }
-
 }
