@@ -2,6 +2,8 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.playlist.CreatePlaylistDTO;
 import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
+import com.example.soundcloud.models.dto.user.APIResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,9 +18,10 @@ public class PlaylistController extends GlobalController {
         return playlistService.getPlaylistById(playlistId);
     }
 
-    @GetMapping("/playlist")
-    public List<ResponsePLDTO> getAllPlaylists(){
-        return playlistService.getAllPlaylists();
+    @GetMapping("/playlist/{offset}/{pageSize}")
+    public APIResponse<Page<ResponsePLDTO>> getAllPlaylists(@PathVariable int offset, @PathVariable int pageSize){
+        Page<ResponsePLDTO> pages = playlistService.getAllPlaylists(offset,pageSize);
+        return new APIResponse<>(pages.getSize(),pages);
     }
 
     @GetMapping("/playlist/search/n/{playlistName}")

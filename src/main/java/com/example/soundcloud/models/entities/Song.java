@@ -1,5 +1,6 @@
 package com.example.soundcloud.models.entities;
 
+import com.example.soundcloud.models.entities.listeners.Listened;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -49,4 +50,6 @@ public class Song {
         private List<User> likers;
         @ManyToMany(mappedBy = "dislikedSongs")
         private List<User> dislikers;
+        @OneToMany(mappedBy = "song")
+        private List<Listened> listeners;
 }

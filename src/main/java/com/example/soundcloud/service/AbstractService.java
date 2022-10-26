@@ -5,10 +5,7 @@ import com.example.soundcloud.models.entities.Playlist;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.NotFoundException;
-import com.example.soundcloud.models.repositories.CommentRepository;
-import com.example.soundcloud.models.repositories.PlaylistRepository;
-import com.example.soundcloud.models.repositories.SongRepository;
-import com.example.soundcloud.models.repositories.UserRepository;
+import com.example.soundcloud.models.repositories.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,6 +23,8 @@ public class AbstractService {
     protected CommentRepository commentRepository;
     @Autowired
     protected Utility utility;
+    @Autowired
+    protected ListenedRepository listenedRepository;
 
     public User findUserById(long userId){
         return userRepository.findById(userId).orElseThrow(()-> new NotFoundException("User does not exist!"));

@@ -9,6 +9,8 @@ import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import lombok.Synchronized;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -102,12 +104,12 @@ public class PlaylistService extends AbstractService {
         return dto;
     }
 
-    public List<ResponsePLDTO> getAllPlaylists() {
-        List<ResponsePLDTO> respDTO = playlistRepository.findAll().stream().map(playlist -> modelMapper.map(playlist, ResponsePLDTO.class)).collect(Collectors.toList());
-        for (ResponsePLDTO resp : respDTO) {
-            resp.setOwner(modelMapper.map(resp.getOwner(), UserWithoutPDTO.class));
+    public Page<ResponsePLDTO> getAllPlaylists(int offset, int pageSize) {
+        Page<ResponsePLDTO> pages = playlistRepository.findAll(PageRequest.of(offset,pageSize)).map(playlist -> modelMapper.map(playlist,ResponsePLDTO.class));
+        for (ResponsePLDTO r : pages){
+            r.setOwner(modelMapper.map(r.getOwner(),UserWithoutPDTO.class));
         }
-        return respDTO;
+        return pages;
     }
 
     public List<ResponsePLDTO> searchPlayListByName(String playlistName) {

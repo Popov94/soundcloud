@@ -7,6 +7,8 @@ import com.example.soundcloud.models.dto.song.*;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
+import com.example.soundcloud.models.entities.listeners.Listened;
+import com.example.soundcloud.models.entities.listeners.ListenedKey;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
@@ -309,10 +311,36 @@ public class SongService extends AbstractService {
         }
     }
 
-    public String play(long sid) {
+    //da se opravi logikata sys setvaneto!!! vseki put se syzdava nov lissener i ne se incrementira stoinosta
+
+    public String play(long sid, long userId) {
         Song song = findSongById(sid);
-        song.setListened(song.getListened() + 1);
-        songRepository.save(song);
+        Optional<User> user = userRepository.findById(userId);
+        ListenedKey listenedKey = new ListenedKey();
+        listenedKey.setSongId(song.getId());
+        Listened listened = new Listened();
+        listened.setSong(song);
+        listenedKey.setUserId(user.get().getId());
+        if (user.isPresent()) {
+            listened.setUser(user.get());
+            if (!(song.getListeners().contains(listened))) {
+                System.out.println("22");
+                song.setListened(song.getListened() + 1);
+                listened.setId(listenedKey);
+                listened.setListened(listened.getListened()+1);
+                System.out.println(listened.getListened());
+                listenedRepository.save(listened);
+                songRepository.save(song);
+            }else {
+                System.out.println("11");
+                listened.setListened(listened.getListened()+1);
+                listenedRepository.save(listened);
+            }
+        } else {
+            song.setListened(song.getListened() + 1);
+            songRepository.save(song);
+        }
+
         return song.getUrl();
     }
 

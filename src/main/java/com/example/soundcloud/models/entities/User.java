@@ -1,6 +1,7 @@
 package com.example.soundcloud.models.entities;
 
 
+import com.example.soundcloud.models.entities.listeners.Listened;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -110,14 +111,10 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "comment_id")
     )
     List<Comment> dislikedComments;
+    @OneToMany(mappedBy = "user")
+    private List<Listened> listeners;
 
 
-//    TODO to create OneToMany relationship for User-songs - done
-//    TODO to create OneToMany relationship for User-Comments
-//    TODO to create OneToMany relationship for User-Playlists
-//    TODO to create ManyToMany relationship with Comments for Like/Dislike
 
-
-    //TODO to create ManyToMany relationship with Songs for Like/Dislike
 
 }

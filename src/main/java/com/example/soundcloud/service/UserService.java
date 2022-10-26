@@ -1,5 +1,7 @@
 package com.example.soundcloud.service;
 
+import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
+import com.example.soundcloud.models.dto.song.ResponseSongDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
@@ -28,6 +30,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -58,8 +62,9 @@ public class UserService extends AbstractService {
             }
             userRepository.save(user);
             return modelMapper.map(user, UserWithoutPDTO.class);
+        } else {
+            throw new BadRequestException("Problem with data validation");
         }
-        return null;
     }
 
     private void sendVerificationEmail(User user)
@@ -341,24 +346,33 @@ public class UserService extends AbstractService {
 
 
     public Page<UserWithoutPDTO> findAllUsersWithPagination(int offset, int pageSize) {
-       Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize)).
-               map(user -> modelMapper.map(user,UserWithoutPDTO.class));
-       return users;
+        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize)).
+                map(user -> modelMapper.map(user, UserWithoutPDTO.class));
+        return users;
     }
 
     public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSorting(int offset, int pageSize, String sortedBy) {
-        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize).
-                withSort(Sort.by(sortedBy))).
-                map(user -> modelMapper.map(user,UserWithoutPDTO.class));
+        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize).
+                        withSort(Sort.by(sortedBy))).
+                map(user -> modelMapper.map(user, UserWithoutPDTO.class));
         return users;
 
     }
 
     public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSortingDesc(int offset, int pageSize, String sortedBy) {
-        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset,pageSize).
+        Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize).
                         withSort(Sort.by(sortedBy).descending())).
-                map(user -> modelMapper.map(user,UserWithoutPDTO.class));
+                map(user -> modelMapper.map(user, UserWithoutPDTO.class));
         return users;
 
     }
+
+//    public HashMap<String, List<ResponseSongDTO>> homePageForLogged(long userId) {
+//        User user = findUserById(userId);
+//        HashMap<String, List<ResponseSongDTO>> suitForUser = new HashMap<>();
+//        suitForUser.put("Last played songs", new ArrayList<>());
+//        suitForUser.put("Last ten liked songs", new ArrayList<>());
+//        suitForUser.put("Ten non-listened songs from the genre he listen the most", new ArrayList<>());
+//        ArrayList<ResponseSongDTO> =
+//    }
 }

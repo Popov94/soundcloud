@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 //import javax.servlet.http.HttpSession;
 //import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -98,8 +99,13 @@ public class SongController extends GlobalController {
     }
 
     @PutMapping("/{sid}/play")
-    public String playSong(@PathVariable long sid) {
-        return songService.play(sid);
+    public String playSong(@PathVariable long sid, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        long userId = 0;
+        if (session.getAttribute(LOGGED)!= null){
+            userId = (long) session.getAttribute(USER_ID);
+        }
+        return songService.play(sid, userId);
     }
 
 

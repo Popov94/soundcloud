@@ -1,6 +1,8 @@
 package com.example.soundcloud.controllers;
 
+import com.example.soundcloud.models.dto.song.ResponseSongDTO;
 import com.example.soundcloud.models.dto.user.*;
+import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import lombok.SneakyThrows;
@@ -11,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -124,23 +127,34 @@ public class UserController extends GlobalController {
 
 
     @GetMapping("/users/pagination/{offset}/{pageSize}")
-    public APIResponse<Page<UserWithoutPDTO>> findAllUserWithPagination(@PathVariable int offset, @PathVariable int pageSize){
-        Page<UserWithoutPDTO> users= userService.findAllUsersWithPagination(offset,pageSize);
+    public APIResponse<Page<UserWithoutPDTO>> findAllUserWithPagination(@PathVariable int offset, @PathVariable int pageSize) {
+        Page<UserWithoutPDTO> users = userService.findAllUsersWithPagination(offset, pageSize);
         return new APIResponse<>(users.getSize(), users);
     }
 
     @GetMapping("/users/pagination/{offset}/{pageSize}/{sortedBy}")
     public APIResponse<Page<UserWithoutPDTO>> findAllUserWithPaginationAndSorting(@PathVariable int offset,
                                                                                   @PathVariable int pageSize,
-                                                                                  @PathVariable String sortedBy){
-        Page<UserWithoutPDTO> users= userService.findAllUsersWithPaginationAndSorting(offset,pageSize,sortedBy);
+                                                                                  @PathVariable String sortedBy) {
+        Page<UserWithoutPDTO> users = userService.findAllUsersWithPaginationAndSorting(offset, pageSize, sortedBy);
         return new APIResponse<>(users.getSize(), users);
     }
+
     @GetMapping("/users/pagination/{offset}/{pageSize}/{sortedBy}/desc")
     public APIResponse<Page<UserWithoutPDTO>> findAllUserWithPaginationAndSortingDesc(@PathVariable int offset,
-                                                                                  @PathVariable int pageSize,
-                                                                                  @PathVariable String sortedBy){
-        Page<UserWithoutPDTO> users= userService.findAllUsersWithPaginationAndSortingDesc(offset,pageSize,sortedBy);
+                                                                                      @PathVariable int pageSize,
+                                                                                      @PathVariable String sortedBy) {
+        Page<UserWithoutPDTO> users = userService.findAllUsersWithPaginationAndSortingDesc(offset, pageSize, sortedBy);
         return new APIResponse<>(users.getSize(), users);
     }
+
+//    @GetMapping("/home")
+//    public HashMap<String, List<ResponseSongDTO>> homePage(HttpServletRequest request){
+//        HttpSession session = request.getSession();
+//        if (session.getAttribute(LOGGED) != null){
+//            long userId = (long) session.getAttribute(USER_ID);
+//            return userService.homePageForLogged(userId);
+//        }
+//    }
+
 }
