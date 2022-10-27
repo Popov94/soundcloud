@@ -5,6 +5,7 @@ import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
+import com.example.soundcloud.models.dto.user.UserWithoutPWithSongsDTO;
 import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.entities.listeners.Listened;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 public class SongService extends AbstractService {
 
     public static final int SONGS_PER_PAGE = 5;
+    public static final int FIRST_PAGE = 1;
     private static final long MAX_FILESIZE = 100 * 1024 * 1024;
 
     private final SongDAO songDAO;
@@ -51,18 +53,13 @@ public class SongService extends AbstractService {
         return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
     }
 
-    public List<ResponseGetSongByUsernameDTO> searchByUploader(String username) {
-        Optional<User> optionalUploader = this.userRepository.findUserByUsername(username);
-        if (optionalUploader.isPresent()) {
-            User user = optionalUploader.get();
-            List<Song> songs = songRepository.findAllByUploader(user);
-            if (songs.size() == 0) {
-                throw new NotFoundException("This user has not uploaded any songs!");
-            }
-            return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongByUsernameDTO.class)).collect(Collectors.toList());
-        } else {
-            throw new NotFoundException("User: " + username + " doesnt exist!");
+    public List<ResponseGetSongByUsernameDTO> searchByUploader(long uid) {
+        User uploader = findUserById(uid);
+        List<Song> songs = songRepository.findAllByUploader(uploader);
+        if (songs.size() == 0) {
+            throw new NotFoundException("This user has not uploaded any songs!");
         }
+        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongByUsernameDTO.class)).collect(Collectors.toList());
     }
 
     public List<ResponseGetSongDTO> searchLikedSongsByUser(String username) {
@@ -110,7 +107,7 @@ public class SongService extends AbstractService {
 
         Integer page = filterType.getPage();
         if (page == null || page == 0) {
-            page = 1;
+            page = FIRST_PAGE;
         }
 
         switch (filterBy) {
@@ -328,13 +325,13 @@ public class SongService extends AbstractService {
                 System.out.println("22");
                 song.setListened(song.getListened() + 1);
                 listened.setId(listenedKey);
-                listened.setListened(listened.getListened()+1);
+                listened.setListened(listened.getListened() + 1);
                 System.out.println(listened.getListened());
                 listenedRepository.save(listened);
                 songRepository.save(song);
-            }else {
+            } else {
                 System.out.println("11");
-                listened.setListened(listened.getListened()+1);
+                listened.setListened(listened.getListened() + 1);
                 listenedRepository.save(listened);
             }
         } else {
@@ -379,23 +376,23 @@ public class SongService extends AbstractService {
     }
 
     public List<ResponseSongFilterDTO> topGenreSongsForUser(long uid, int page) throws SQLException {
-        if(page == 0) {
+        if (page == 0) {
             page = 1;
         }
         return songDAO.findSongsByGenreForUser(uid, page, SONGS_PER_PAGE);
     }
 
     public List<ResponseSongFilterDTO> topGenreSongs(int page) throws SQLException {
-        if(page == 0) {
+        if (page == 0) {
             page = 1;
         }
         return songDAO.findSongsByGenre(page, SONGS_PER_PAGE);
     }
 
     public List<ResponseSongFilterDTO> topListened(int page) throws SQLException {
-        if(page == 0) {
+        if (page == 0) {
             page = 1;
         }
-        return songDAO.findTopListened( page, SONGS_PER_PAGE);
+        return songDAO.findTopListened(page, SONGS_PER_PAGE);
     }
 }

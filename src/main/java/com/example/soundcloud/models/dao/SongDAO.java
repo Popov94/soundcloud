@@ -19,9 +19,8 @@ public class SongDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-
-    public List<ResponseSongFilterDTO> filter(String searchTitle, String filterBy, String orderBy, int page, int songsPerPage) throws SQLException {
-        List<ResponseSongFilterDTO> songs = new ArrayList<>();
+    public List<ResponseSongFilterDTO> filter(String searchTitle, String filterBy, String orderBy, int page,
+                                                                     int songsPerPage) throws SQLException {
 
             String sql ="SELECT S.title, " +
                 "S.id AS songId, " +
@@ -43,31 +42,34 @@ public class SongDAO {
                 "LIMIT %d OFFSET %d";
 
         sql = String.format(sql, searchTitle, filterBy, orderBy, songsPerPage,(songsPerPage * (page - 1)));
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if(dataSource != null) {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement ps = connection.prepareStatement(sql)) {
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    long songId = rs.getInt("songId");
-                    String title = rs.getString("title");
-                    int listened = rs.getInt("listened");
-                    int comments = rs.getInt("comments");
-                    int likes = rs.getInt("likes");
-                    int dislikes = rs.getInt("dislikes");
-                    LocalDateTime createdAt = rs.getTimestamp("upload_date").toLocalDateTime();
-                    String uploadedBy = rs.getString("uploadedBy");
-                    songs.add(new ResponseSongFilterDTO(title, uploadedBy, songId, listened, likes, dislikes, createdAt,comments));
-                }
-            } catch (SQLException e) {
-                throw new SQLException(e.getMessage(),"Problem with connection to DB!");
-            }
-        }
-        return songs;
+        return queryToDB(sql);
     }
 
-    public List<ResponseSongFilterDTO> findSongsByGenreForUser(long uid, int page, int songsPerPage) throws SQLException {
-        List<ResponseSongFilterDTO> songs = new ArrayList<>();
+    public List<ResponseSongFilterDTO> findTopListened(int page, int songsPerPage) throws SQLException {
+        String sql = "SELECT S.title, \n" +
+                "S.id AS songId, \n" +
+                "U.username AS uploadedBy, \n" +
+                "S.listened, \n" +
+                "COUNT(DISTINCT C.id) AS comments,\n" +
+                "COUNT(DISTINCT ULS.user_id) AS likes, \n" +
+                "COUNT(DISTINCT UDS.user_id) AS dislikes, \n" +
+                "S.created_at AS upload_date \n" +
+                "FROM songs S \n" +
+                "LEFT JOIN comments C ON S.id = C.song_id \n" +
+                "LEFT JOIN users U ON S.uploader_id = U.id \n" +
+                "LEFT JOIN users_like_songs ULS ON S.id = ULS.song_id\n" +
+                "LEFT JOIN users_dislike_songs UDS ON S.id = UDS.song_id \n" +
+                "LEFT JOIN playlists_songs PS ON S.id = PS.songs_id \n" +
+                "GROUP BY S.id\n" +
+                "ORDER BY listened DESC\n" +
+                "LIMIT %d OFFSET %d";
+
+        sql = String.format(sql, songsPerPage, (songsPerPage * (page - 1)));
+        return queryToDB(sql);
+    }
+
+    public List<ResponseSongFilterDTO> findSongsByGenre(int page, int songsPerPage) throws SQLException {
+        String genre= findTopLikedGenre();
 
         String sql = "SELECT S.title, \n" +
                 "S.id AS songId, \n" +
@@ -83,8 +85,56 @@ public class SongDAO {
                 "LEFT JOIN users_like_songs ULS ON S.id = ULS.song_id\n" +
                 "LEFT JOIN users_dislike_songs UDS ON S.id = UDS.song_id \n" +
                 "LEFT JOIN playlists_songs PS ON S.id = PS.songs_id \n" +
-                "WHERE genre = (SELECT \n" +
-                "S.genre AS GENRE\n" +
+                "WHERE genre = ('%s')\n" +
+                "GROUP BY S.id\n" +
+                "ORDER BY listened DESC\n" +
+                "LIMIT %d OFFSET %d";
+
+        sql = String.format(sql, genre, songsPerPage, (songsPerPage * (page - 1)));
+        return queryToDB(sql);
+    }
+
+    public String findTopLikedGenre() {
+        String sql = "SELECT \n" +
+                "S.genre AS genre\n" +
+                "FROM songs AS S\n" +
+                "JOIN users_like_songs AS ULS ON (ULS.song_id = S.id)\n" +
+                "GROUP BY genre\n" +
+                "ORDER BY COUNT(genre) DESC\n" +
+                "LIMIT 1\n";
+        return jdbcTemplate.queryForObject(sql, String.class);
+    }
+
+    public List<ResponseSongFilterDTO> findSongsByGenreForUser(long uid, int page, int songsPerPage) throws SQLException {
+        String genre = findTopGenreForUser(uid);
+
+        String sql = "SELECT S.title, \n" +
+                "S.id AS songId, \n" +
+                "U.username AS uploadedBy, \n" +
+                "S.listened, \n" +
+                "COUNT(DISTINCT C.id) AS comments,\n" +
+                "COUNT(DISTINCT ULS.user_id) AS likes, \n" +
+                "COUNT(DISTINCT UDS.user_id) AS dislikes, \n" +
+                "S.created_at AS upload_date \n" +
+                "FROM songs S \n" +
+                "LEFT JOIN comments C ON S.id = C.song_id \n" +
+                "LEFT JOIN users U ON S.uploader_id = U.id \n" +
+                "LEFT JOIN users_like_songs ULS ON S.id = ULS.song_id\n" +
+                "LEFT JOIN users_dislike_songs UDS ON S.id = UDS.song_id \n" +
+                "LEFT JOIN playlists_songs PS ON S.id = PS.songs_id \n" +
+                "WHERE S.genre = ('%s')\n" +
+                "GROUP BY S.id\n" +
+                "ORDER BY listened DESC\n" +
+                "LIMIT %d OFFSET %d";
+
+        sql = String.format(sql, genre, songsPerPage, (songsPerPage * (page - 1)));
+        return queryToDB(sql);
+    }
+
+    public String findTopGenreForUser(long uid) throws SQLException {
+        String genre = null;
+        String sql = "SELECT \n" +
+                "S.genre AS genre\n" +
                 "FROM\n" +
                 "songs AS S\n" +
                 "JOIN\n" +
@@ -92,58 +142,27 @@ public class SongDAO {
                 "WHERE\n" +
                 "ULS.user_id = %d\n" +
                 "GROUP BY genre\n" +
-                "ORDER BY genre DESC\n" +
-                "LIMIT 1)\n" +
-                "GROUP BY S.id\n" +
-                "ORDER BY listened DESC\n" +
-                "LIMIT %d OFFSET %d";
+                "ORDER BY COUNT(genre) DESC\n" +
+                "LIMIT 1";
 
-        sql = String.format(sql, uid, songsPerPage, (songsPerPage * (page - 1)));
+        sql = String.format(sql, uid);
         DataSource dataSource = jdbcTemplate.getDataSource();
-        if(dataSource != null) {
+        if (dataSource != null) {
             try (Connection connection = dataSource.getConnection();
                  PreparedStatement ps = connection.prepareStatement(sql)) {
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
-                    long songId = rs.getInt("songId");
-                    String title = rs.getString("title");
-                    int listened = rs.getInt("listened");
-                    int comments = rs.getInt("comments");
-                    int likes = rs.getInt("likes");
-                    int dislikes = rs.getInt("dislikes");
-                    LocalDateTime createdAt = rs.getTimestamp("upload_date").toLocalDateTime();
-                    String uploadedBy = rs.getString("uploadedBy");
-                    songs.add(new ResponseSongFilterDTO(title, uploadedBy, songId, listened, likes, dislikes, createdAt,comments));
+                    genre = rs.getString("genre");
                 }
             } catch (SQLException e) {
-                throw new SQLException(e.getMessage(),"Problem with connection to DB!");
+                throw new SQLException(e.getMessage(), "Problem with connection to DB!");
             }
         }
-        return songs;
+        return genre;
     }
 
-    public List<ResponseSongFilterDTO> findTopListened(int page, int songsPerPage) throws SQLException {
+    public List<ResponseSongFilterDTO> queryToDB(String sql) throws SQLException {
         List<ResponseSongFilterDTO> songs = new ArrayList<>();
-
-        String sql = "SELECT S.title, \n" +
-                "S.id AS songId, \n" +
-                "U.username AS uploadedBy, \n" +
-                "S.listened, \n" +
-                "COUNT(DISTINCT C.id) AS comments,\n" +
-                "COUNT(DISTINCT ULS.user_id) AS likes, \n" +
-                "COUNT(DISTINCT UDS.user_id) AS dislikes, \n" +
-                "S.created_at AS upload_date \n" +
-                "FROM songs S \n" +
-                "LEFT JOIN comments C ON S.id = C.song_id \n" +
-                "LEFT JOIN users U ON S.uploader_id = U.id \n" +
-                "LEFT JOIN users_like_songs ULS ON S.id = ULS.song_id\n" +
-                "LEFT JOIN users_dislike_songs UDS ON S.id = UDS.song_id \n" +
-                "LEFT JOIN playlists_songs PS ON S.id = PS.songs_id \n" +
-                "GROUP BY S.id\n" +
-                "ORDER BY listened DESC\n" +
-                "LIMIT %d OFFSET %d";
-
-        sql = String.format(sql, songsPerPage, (songsPerPage * (page - 1)));
         DataSource dataSource = jdbcTemplate.getDataSource();
         if(dataSource != null) {
             try (Connection connection = dataSource.getConnection();
@@ -158,65 +177,13 @@ public class SongDAO {
                     int dislikes = rs.getInt("dislikes");
                     LocalDateTime createdAt = rs.getTimestamp("upload_date").toLocalDateTime();
                     String uploadedBy = rs.getString("uploadedBy");
-                    songs.add(new ResponseSongFilterDTO(title, uploadedBy, songId, listened, likes, dislikes, createdAt,comments));
+                    songs.add(new ResponseSongFilterDTO(title, uploadedBy, songId, listened, likes, dislikes, createdAt, comments));
                 }
+
             } catch (SQLException e) {
                 throw new SQLException(e.getMessage(),"Problem with connection to DB!");
             }
         }
         return songs;
     }
-
-    public List<ResponseSongFilterDTO> findSongsByGenre(int page, int songsPerPage) throws SQLException {
-        List<ResponseSongFilterDTO> songs = new ArrayList<>();
-
-        String sql = "SELECT S.title, \n" +
-                "S.id AS songId, \n" +
-                "U.username AS uploadedBy, \n" +
-                "S.listened, \n" +
-                "COUNT(DISTINCT C.id) AS comments,\n" +
-                "COUNT(DISTINCT ULS.user_id) AS likes, \n" +
-                "COUNT(DISTINCT UDS.user_id) AS dislikes, \n" +
-                "S.created_at AS upload_date \n" +
-                "FROM songs S \n" +
-                "LEFT JOIN comments C ON S.id = C.song_id \n" +
-                "LEFT JOIN users U ON S.uploader_id = U.id \n" +
-                "LEFT JOIN users_like_songs ULS ON S.id = ULS.song_id\n" +
-                "LEFT JOIN users_dislike_songs UDS ON S.id = UDS.song_id \n" +
-                "LEFT JOIN playlists_songs PS ON S.id = PS.songs_id \n" +
-                "WHERE genre = (SELECT \n" +
-                "S.genre AS GENRE\n" +
-                "FROM songs AS S\n" +
-                "JOIN users_like_songs AS ULS ON (ULS.song_id = S.id)\n" +
-                "GROUP BY genre\n" +
-                "ORDER BY COUNT(DISTINCT ULS.user_id) DESC\n" +
-                "LIMIT 1\n)\n" +
-                "GROUP BY S.id\n" +
-                "ORDER BY listened DESC\n" +
-                "LIMIT %d OFFSET %d";
-
-        sql = String.format(sql, songsPerPage, (songsPerPage * (page - 1)));
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if(dataSource != null) {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement ps = connection.prepareStatement(sql)) {
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    long songId = rs.getInt("songId");
-                    String title = rs.getString("title");
-                    int listened = rs.getInt("listened");
-                    int comments = rs.getInt("comments");
-                    int likes = rs.getInt("likes");
-                    int dislikes = rs.getInt("dislikes");
-                    LocalDateTime createdAt = rs.getTimestamp("upload_date").toLocalDateTime();
-                    String uploadedBy = rs.getString("uploadedBy");
-                    songs.add(new ResponseSongFilterDTO(title, uploadedBy, songId, listened, likes, dislikes, createdAt,comments));
-                }
-            } catch (SQLException e) {
-                throw new SQLException(e.getMessage(),"Problem with connection to DB!");
-            }
-        }
-        return songs;
-    }
-
 }
