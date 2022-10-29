@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 @RestController
@@ -78,6 +80,18 @@ public abstract class GlobalController {
         return buildErrorInfo(e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(SQLException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDTO handleSQLException(SQLException e) {
+        return buildErrorInfo(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(FileException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDTO handleSQLException(FileException e) {
+        return buildErrorInfo(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private ErrorDTO buildErrorInfo(Exception e, HttpStatus status) {
         e.printStackTrace();
         ErrorDTO dto = new ErrorDTO();
@@ -88,11 +102,12 @@ public abstract class GlobalController {
     }
 
 
-    public void logUser(HttpServletRequest req, long id){
+    public void logUser(HttpServletRequest req, long id) {
         HttpSession session = req.getSession();
         session.setAttribute(LOGGED, true);
         session.setAttribute(USER_ID, id);
         session.setAttribute(REMOTE_IP, req.getRemoteAddr());
+        session.setMaxInactiveInterval(30 * 60);
     }
 
 

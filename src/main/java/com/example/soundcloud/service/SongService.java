@@ -1,5 +1,10 @@
 package com.example.soundcloud.service;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.example.soundcloud.models.dao.SongDAO;
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
@@ -11,15 +16,20 @@ import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.entities.listeners.Listened;
 import com.example.soundcloud.models.entities.listeners.ListenedKey;
 import com.example.soundcloud.models.exceptions.BadRequestException;
+import com.example.soundcloud.models.exceptions.FileException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
+import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,12 +47,18 @@ public class SongService extends AbstractService {
     public static final int SONGS_PER_PAGE = 5;
     public static final int FIRST_PAGE = 1;
     private static final long MAX_FILESIZE = 100 * 1024 * 1024;
+    private static final String STORAGE_BUCKET_NAME = "soundcloudtalents";
+
 
     private final SongDAO songDAO;
+    private final AmazonS3 storageClient;
 
-    public SongService(SongDAO songDAO) {
+    @Autowired
+    public SongService(SongDAO songDAO, AmazonS3 storageClient) {
         this.songDAO = songDAO;
+        this.storageClient = storageClient;
     }
+
 
 
     public List<ResponseGetSongDTO> searchByGenre(String genre) {
@@ -174,7 +190,6 @@ public class SongService extends AbstractService {
     }
 
     public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre, String description, MultipartFile songFile) {
-
         User currentUser = findUserById(uid);
         String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
         String nameUrl = "uploadedSongs" + File.separator + System.nanoTime() + "." + extension;
@@ -184,7 +199,11 @@ public class SongService extends AbstractService {
         if (songFile.getSize() > MAX_FILESIZE) {
             throw new BadRequestException("The size of the song is too large.");
         }
+
         Song uploadedSong = new Song();
+        ObjectMetadata metaData = new ObjectMetadata();
+        metaData.setContentType("audio/mpeg");
+        metaData.setContentLength(songFile.getSize());
 
         if (songUploadValidation(title, artist, genre)) {
             File f = new File(nameUrl);
@@ -198,18 +217,23 @@ public class SongService extends AbstractService {
                 throw new BadRequestException("The file already exists!");
             }
 
-            uploadedSong.setUploader(currentUser);
-            uploadedSong.setTitle(title);
-            uploadedSong.setArtist(artist);
-            uploadedSong.setGenre(genre);
-            uploadedSong.setCreatedAt(LocalDateTime.now());
-            uploadedSong.setListened(0);
-            uploadedSong.setUrl(nameUrl);
-            if (description != null) {
-                uploadedSong.setDescription(description);
+            try {
+                this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
+                uploadedSong.setUploader(currentUser);
+                uploadedSong.setTitle(title);
+                uploadedSong.setArtist(artist);
+                uploadedSong.setGenre(genre);
+                uploadedSong.setCreatedAt(LocalDateTime.now());
+                uploadedSong.setListened(0);
+                uploadedSong.setUrl(nameUrl);
+                if (description != null) {
+                    uploadedSong.setDescription(description);
+                }
+                this.songRepository.save(uploadedSong);
+            } catch (AmazonServiceException | IOException e) {
+                throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
             }
         }
-        songRepository.save(uploadedSong);
         return modelMapper.map(uploadedSong, ResponseSongUploadDTO.class);
     }
 
@@ -221,6 +245,7 @@ public class SongService extends AbstractService {
             File fileToDelete = new File(songToDelete.getUrl());
             fileToDelete.delete();
             songRepository.delete(songToDelete);
+            storageClient.deleteObject(STORAGE_BUCKET_NAME, songToDelete.getUrl());
             return new ResponseSongDeleteDTO("Song deleted successfully!", sid);
         } else {
             throw new MethodNotAllowedException("The song that you are trying to delete was not uploaded by you!");
@@ -311,15 +336,15 @@ public class SongService extends AbstractService {
 
     //da se opravi logikata sys setvaneto!!! vseki put se syzdava nov lissener i ne se incrementira stoinosta
 
-    public String play(long sid, long userId) {
+    public void play(long sid, long userId, HttpServletResponse response) {
         Song song = findSongById(sid);
         Optional<User> user = userRepository.findById(userId);
-        ListenedKey listenedKey = new ListenedKey();
-        listenedKey.setSongId(song.getId());
-        Listened listened = new Listened();
-        listened.setSong(song);
-        listenedKey.setUserId(user.get().getId());
         if (user.isPresent()) {
+            ListenedKey listenedKey = new ListenedKey();
+            listenedKey.setSongId(song.getId());
+            Listened listened = new Listened();
+            listened.setSong(song);
+            listenedKey.setUserId(user.get().getId());
             listened.setUser(user.get());
             if (!(song.getListeners().contains(listened))) {
                 System.out.println("22");
@@ -339,7 +364,31 @@ public class SongService extends AbstractService {
             songRepository.save(song);
         }
 
-        return song.getUrl();
+        String nameOfFile = song.getUrl().substring(song.getUrl().indexOf(File.separator));
+        System.out.println(nameOfFile);
+        File songToPlay = new File("uploadedSongs" + File.separator + nameOfFile);
+        if(!songToPlay.exists()){
+            throw new NotFoundException("Song does not exist");
+        } else{
+            try {
+                response.setContentType(Files.probeContentType(songToPlay.toPath()));
+                Files.copy(songToPlay.toPath(),response.getOutputStream());
+            } catch (IOException e) {
+                throw new BadRequestException("Problem with output stream.");
+            }
+        }
+    }
+
+    public byte[] downloadSong(@PathVariable String songName){
+        S3Object songFile = storageClient.getObject(STORAGE_BUCKET_NAME, songName);
+        S3ObjectInputStream inputStream = songFile.getObjectContent();
+
+        try {
+        byte[] content = IOUtils.toByteArray(inputStream);
+            return content;
+        } catch (AmazonServiceException | IOException e) {
+            throw new FileException("Problem with song downloading - " + e.getMessage());
+        }
     }
 
 

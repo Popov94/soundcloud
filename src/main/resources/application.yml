@@ -1,0 +1,22 @@
+cloud:
+  aws:
+    credentials:
+      access-key: "${cloud.aws.credentials.access-key}"
+      secret-key: YiI1epZvRN79m0BPfdtuDMEXE48FQe3v1xmfssDY
+      region:
+        static: us-central-1
+        auto: false
+
+application :
+  bucket:
+    name: soundcloudtalents
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50
+      max-request-size: 100
+
+server:
+  port: 9999

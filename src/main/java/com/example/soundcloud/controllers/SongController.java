@@ -11,11 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.data.domain.Page;
 //import org.springframework.jdbc.core.JdbcTemplate;
 //import org.springframework.security.core.parameters.P;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 //import javax.servlet.http.HttpSession;
 //import javax.sql.DataSource;
@@ -98,13 +101,14 @@ public class SongController extends GlobalController {
     }
 
     @PutMapping("/songs/{sid}/play")
-    public String playSong(@PathVariable long sid, HttpServletRequest request) {
+    public void playSong(@PathVariable long sid, HttpServletRequest request, HttpServletResponse response) {
+
         HttpSession session = request.getSession();
         long userId = 0;
         if (session.getAttribute(LOGGED)!= null){
             userId = (long) session.getAttribute(USER_ID);
         }
-        return songService.play(sid, userId);
+        songService.play(sid, userId, response);
     }
 
     @GetMapping("/songs/feed/top_genre_for_user/{page}")

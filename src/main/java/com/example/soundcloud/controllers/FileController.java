@@ -1,8 +1,13 @@
 package com.example.soundcloud.controllers;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
-import org.hibernate.Session;
+import com.example.soundcloud.models.repositories.SongRepository;
+import com.example.soundcloud.service.SongService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,10 +17,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.rmi.ServerError;
 
 @RestController
 public class FileController extends GlobalController{
+    @Autowired
+    private SongService service;
 
     @GetMapping("/images/{fileName}")
     public void downloadProfileImage(@PathVariable String fileName, HttpServletResponse resp, HttpServletRequest req){
@@ -33,17 +39,15 @@ public class FileController extends GlobalController{
     }
 
     @GetMapping("songs/download/{songName}")
-    public void downloadSong(@PathVariable String songName, HttpServletResponse response){
-        File song = new File("uploadedSongs" + File.separator + songName);
-        if(!song.exists()){
-            throw new NotFoundException("Song does not exist");
-        } else{
-            try {
-                response.setContentType(Files.probeContentType(song.toPath()));
-                Files.copy(song.toPath(),response.getOutputStream());
-            } catch (IOException e) {
-                throw new BadRequestException("Problem with output stream.");
-            }
-        }
+    public ResponseEntity<ByteArrayResource> downloadSong(@PathVariable String songName){
+        String name = "uploadedSongs" + File.separator + songName;
+        byte[] data = service.downloadSong(name);
+        ByteArrayResource resource = new ByteArrayResource(data);
+        return ResponseEntity
+                .ok()
+                .contentLength(data.length)
+                .header("Content-type", "application/octet-stream")
+                .header("Content-disposition", "attachment; filename=\"" + songName + "\"")
+                .body(resource);
     }
 }
