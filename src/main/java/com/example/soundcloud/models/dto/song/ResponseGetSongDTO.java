@@ -15,9 +15,6 @@ public class ResponseGetSongDTO {
     private String artist;
     private String url;
     private int listened;
-    private int likes;
-    private int dislikes;
-    private int comments;
     private LocalDateTime createdAt;
     private String description;
     private long uploaderId;

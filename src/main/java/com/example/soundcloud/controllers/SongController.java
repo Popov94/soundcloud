@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 @RestController
-//@RequestMapping("/songs")
 public class SongController extends GlobalController {
     @Autowired
     private SongService songService;
@@ -42,13 +41,13 @@ public class SongController extends GlobalController {
     }
 
     @GetMapping("/songs/by_username/{uid}")
-    public List<ResponseGetSongByUsernameDTO> searchByUserId(@PathVariable long uid) {
+    public List<ResponseGetSongInfoDTO> searchByUserId(@PathVariable long uid) {
         return this.songService.searchByUploader(uid);
     }
 
-    @GetMapping("/songs/{username}/liked")
-    public List<ResponseGetSongDTO> searchLikedSongs(@PathVariable String username) {
-        return this.songService.searchLikedSongsByUser(username);
+    @GetMapping("/songs/{uid}/liked")
+    public List<ResponseGetSongDTO> searchLikedSongs(@PathVariable long uid) {
+        return this.songService.searchLikedSongsByUser(uid);
     }
 
     @GetMapping("/songs/by_genre/{genre}")
@@ -69,14 +68,12 @@ public class SongController extends GlobalController {
     @PostMapping("/songs/{sid}/like")
     public LikeDTO like(@PathVariable long sid, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
-        this.songService.isSongDisliked(sid, uid);
         return songService.like(sid, uid);
     }
 
     @PostMapping("/songs/{sid}/dislike")
     public DislikeDTO dislike(@PathVariable long sid, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
-        this.songService.isSongLiked(sid, uid);
         return songService.dislike(sid, uid);
     }
 

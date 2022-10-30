@@ -9,6 +9,7 @@ import com.example.soundcloud.models.dao.SongDAO;
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
+import com.example.soundcloud.models.dto.user.UserInfoDTO;
 import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import com.example.soundcloud.models.dto.user.UserWithoutPWithSongsDTO;
 import com.example.soundcloud.models.entities.Song;
@@ -20,6 +21,7 @@ import com.example.soundcloud.models.exceptions.FileException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
 import org.apache.commons.io.IOUtils;
+import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -44,8 +47,8 @@ import java.util.stream.Collectors;
 @Service
 public class SongService extends AbstractService {
 
-    public static final int SONGS_PER_PAGE = 5;
     public static final int FIRST_PAGE = 1;
+    public static final int SONGS_PER_PAGE = 5;
     private static final long MAX_FILESIZE = 100 * 1024 * 1024;
     private static final String STORAGE_BUCKET_NAME = "soundcloudtalents";
 
@@ -68,27 +71,28 @@ public class SongService extends AbstractService {
         return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
     }
 
-    public List<ResponseGetSongByUsernameDTO> searchByUploader(long uid) {
+    public List<ResponseGetSongInfoDTO> searchByUploader(long uid) {
         User uploader = findUserById(uid);
         List<Song> songs = songRepository.findAllByUploader(uploader);
         if (songs.size() == 0) {
             throw new NotFoundException("This user has not uploaded any songs!");
         }
-        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongByUsernameDTO.class)).collect(Collectors.toList());
+        List<ResponseGetSongInfoDTO> songsDTO = new ArrayList<>();
+        for (Song song : songs){
+            long sid = song.getId();
+            ResponseGetSongInfoDTO s = copySongToDTO(sid);
+            songsDTO.add(s);
+        }
+        return songsDTO;
     }
 
-    public List<ResponseGetSongDTO> searchLikedSongsByUser(String username) {
-        Optional<User> optionalUser = this.userRepository.findUserByUsername(username);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            List<Song> songs = user.getLikedSongs();
-            if (songs.size() == 0) {
-                throw new NotFoundException("This user has not liked any songs!");
-            }
-            return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
-        } else {
-            throw new NotFoundException("User: " + username + " doesnt exist!");
+    public List<ResponseGetSongDTO> searchLikedSongsByUser(long uid) {
+        User user = findUserById(uid);
+        List<Song> songs = user.getLikedSongs();
+        if (songs.size() == 0) {
+            throw new NotFoundException("This user has not liked any songs!");
         }
+        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
     }
 
     public List<ResponseGetSongDTO> searchByTitle(String title) {
@@ -140,6 +144,9 @@ public class SongService extends AbstractService {
     public LikeDTO like(long sid, long uid) {
         Song song = findSongById(sid);
         User user = findUserById(uid);
+        if (song.getDislikers().contains(user)) {
+            user.getDislikedSongs().remove(song);
+        }
         if (user.getLikedSongs().contains(song)) {
             user.getLikedSongs().remove(song);
             userRepository.save(user);
@@ -154,6 +161,9 @@ public class SongService extends AbstractService {
     public DislikeDTO dislike(long sid, long uid) {
         Song song = findSongById(sid);
         User user = findUserById(uid);
+        if (song.getLikers().contains(user)) {
+            user.getLikedSongs().remove(song);
+        }
         if (user.getDislikedSongs().contains(song)) {
             user.getDislikedSongs().remove(song);
             userRepository.save(user);
@@ -165,22 +175,6 @@ public class SongService extends AbstractService {
         }
     }
 
-    public void isSongDisliked(long sid, long uid) {
-        Song song = findSongById(sid);
-        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (song.getDislikers().contains(currentUser)) {
-            currentUser.getDislikedSongs().remove(song);
-        }
-    }
-
-    public void isSongLiked(long sid, long uid) {
-        Song song = findSongById(sid);
-        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (song.getLikers().contains(currentUser)) {
-            currentUser.getLikedSongs().remove(song);
-        }
-    }
-
     public ResponseSongDTO getSongWithUserById(long sid) {
         Song song = findSongById(sid);
         ResponseSongDTO dto = modelMapper.map(song, ResponseSongDTO.class);
@@ -188,53 +182,51 @@ public class SongService extends AbstractService {
         return dto;
     }
 
-    public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre, String description, MultipartFile songFile) {
-    User currentUser = findUserById(uid);
-    String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
-    String nameUrl = "uploadedSongs" + File.separator + System.nanoTime() + "." + extension;
+    public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre,
+                                            String description, MultipartFile songFile) {
+        User currentUser = findUserById(uid);
+        String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
+        String nameUrl = "uploadedSongs" + File.separator + System.nanoTime() + "." + extension;
         if (!extension.equals("mp3")) {
-        throw new BadRequestException("You are trying to upload an invalid file. You have to select an mp3 file.");
-    }
+            throw new BadRequestException("You are trying to upload an invalid file. You have to select an mp3 file.");
+        }
         if (songFile.getSize() > MAX_FILESIZE) {
-        throw new BadRequestException("The size of the song is too large.");
-    }
-
-    Song uploadedSong = new Song();
-    ObjectMetadata metaData = new ObjectMetadata();
+            throw new BadRequestException("The size of the song is too large.");
+        }
+        Song uploadedSong = new Song();
+        ObjectMetadata metaData = new ObjectMetadata();
         metaData.setContentType("audio/mpeg");
         metaData.setContentLength(songFile.getSize());
-
         if (songUploadValidation(title, artist, genre)) {
-        File f = new File(nameUrl);
-        if (!f.exists()) {
+            File f = new File(nameUrl);
+            if (!f.exists()) {
+                try {
+                    Files.copy(songFile.getInputStream(), f.toPath());
+                } catch (IOException e) {
+                    throw new BadRequestException(e.getMessage(), e);
+                }
+            } else {
+                throw new BadRequestException("The file already exists!");
+            }
             try {
-                Files.copy(songFile.getInputStream(), f.toPath());
-            } catch (IOException e) {
-                throw new BadRequestException(e.getMessage(), e);
+                this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
+                uploadedSong.setUploader(currentUser);
+                uploadedSong.setTitle(title);
+                uploadedSong.setArtist(artist);
+                uploadedSong.setGenre(genre);
+                uploadedSong.setCreatedAt(LocalDateTime.now());
+                uploadedSong.setListened(0);
+                uploadedSong.setUrl(nameUrl);
+                if (description != null) {
+                    uploadedSong.setDescription(description);
+                }
+                this.songRepository.save(uploadedSong);
+            } catch (AmazonServiceException | IOException e) {
+                throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
             }
-        } else {
-            throw new BadRequestException("The file already exists!");
         }
-
-        try {
-            this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
-            uploadedSong.setUploader(currentUser);
-            uploadedSong.setTitle(title);
-            uploadedSong.setArtist(artist);
-            uploadedSong.setGenre(genre);
-            uploadedSong.setCreatedAt(LocalDateTime.now());
-            uploadedSong.setListened(0);
-            uploadedSong.setUrl(nameUrl);
-            if (description != null) {
-                uploadedSong.setDescription(description);
-            }
-            this.songRepository.save(uploadedSong);
-        } catch (AmazonServiceException | IOException e) {
-            throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
-        }
-    }
         return modelMapper.map(uploadedSong, ResponseSongUploadDTO.class);
-}
+    }
 
 
     public ResponseSongDeleteDTO deleteSong(long uid, long sid) {
@@ -260,7 +252,7 @@ public class SongService extends AbstractService {
             if (user.getId() == song.getUploader().getId()) {
                 setSongEdit(dto, song);
                 songRepository.save(song);
-                return modelMapper.map(song, ResponseGetSongInfoDTO.class);
+                return copySongToDTO(sid);
             } else {
                 throw new MethodNotAllowedException("The song that you are trying to edit was not uploaded by you!");
             }
@@ -368,7 +360,6 @@ public class SongService extends AbstractService {
             songRepository.save(song);
         }
         String nameOfFile = song.getUrl().substring(song.getUrl().indexOf(File.separator));
-        System.out.println(nameOfFile);
         File songToPlay = new File("uploadedSongs" + File.separator + nameOfFile);
         if (!songToPlay.exists()) {
             throw new NotFoundException("Song does not exist");
@@ -396,11 +387,26 @@ public class SongService extends AbstractService {
 
 
     public ResponseGetSongInfoDTO getSongInfo(long sid) {
+        return copySongToDTO(sid);
+    }
+
+    public ResponseGetSongInfoDTO copySongToDTO(long sid){
         Song song = findSongById(sid);
-        ResponseGetSongInfoDTO dto = modelMapper.map(song, ResponseGetSongInfoDTO.class);
-        dto.setLikes(song.getLikers().size());
-        dto.setDislikes(song.getDislikers().size());
-        dto.setComments(song.getComments().size());
+        String title = song.getTitle();
+        String genre = song.getGenre();
+        String artist = song.getArtist();
+        String url = song.getUrl();
+        String description = song.getDescription();
+        LocalDateTime createdAt = song.getCreatedAt();
+        long id = song.getId();
+        int likes = song.getLikers().size();
+        int dislikes = song.getDislikers().size();
+        int comments = song.getComments().size();
+        int listened = song.getListened();
+        User user = song.getUploader();
+        UserInfoDTO user1 = modelMapper.map(user, UserInfoDTO.class);
+        ResponseGetSongInfoDTO dto = new ResponseGetSongInfoDTO(id, title, genre, artist, url, createdAt, listened,
+                description, user1, likes, dislikes, comments);
         return dto;
     }
 

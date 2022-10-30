@@ -1,6 +1,7 @@
 package com.example.soundcloud.models.entities;
 
 import com.example.soundcloud.models.entities.listeners.Listened;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -36,9 +37,6 @@ public class Song {
         private LocalDateTime createdAt;
         @Column
         private String description;
-        private int likes;
-        private int dislikes;
-        private int quantityComments;
         @ManyToOne
         @JoinColumn(name = "uploader_id")
         private User uploader;

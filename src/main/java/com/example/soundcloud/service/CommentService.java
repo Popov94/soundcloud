@@ -72,7 +72,7 @@ public class CommentService extends AbstractService {
         Comment comment = findCommentById(commentId);
         if (user.getId() == comment.getCommentOwner().getId()) {
             commentRepository.delete(comment);
-            return "Comment with " + comment.getId() + " was deleted successfully";
+            return "Comment with id " + comment.getId() + " was deleted successfully";
         } else {
             throw new BadRequestException("Only owner of the comment can delete it");
         }
