@@ -14,6 +14,7 @@ import com.example.soundcloud.models.entities.Song;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 @Service
 public class CommentService extends AbstractService {
 
+    @Transactional
     public ResponseCommentDTO createComment(long songId, long userId, CreateCommentDTO dto) {
         User user = findUserById(userId);
         Song song = findSongById(songId);
@@ -63,6 +65,7 @@ public class CommentService extends AbstractService {
 
     }
 
+    @Transactional
     public String deleteComment(long songId, long userId, long commentId) {
         Song song = findSongById(songId);
         User user = findUserById(userId);
@@ -132,6 +135,7 @@ public class CommentService extends AbstractService {
         }
     }
 
+    @Transactional
     public CommentedCommentDTO commentComment(long songId, long userId, CreateCommentDTO dto, long commentId) {
         if (utility.isTextValid(dto)) {
             User user = findUserById(userId);

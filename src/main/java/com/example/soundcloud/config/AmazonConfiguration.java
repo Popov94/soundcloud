@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AmazonConfiguration {
-    @Value("${cloud.aws.credentials.access-key}")
+    @Value("AKIA54AWUPO3TCMGKHFK")
     String accessKey;
-    @Value("${cloud.aws.credentials.secret-key}")
+    @Value("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")
     String secretKey;
 
     @Bean

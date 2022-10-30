@@ -1,6 +1,5 @@
 package com.example.soundcloud.models.dto.song;
 
-import com.example.soundcloud.models.entities.Song;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,4 +14,5 @@ public class ResponseSongFilterDTO {
     private int dislikes;
     private LocalDateTime uploadedAt;
     private int comments;
+
 }

@@ -60,7 +60,6 @@ public class SongService extends AbstractService {
     }
 
 
-
     public List<ResponseGetSongDTO> searchByGenre(String genre) {
         List<Song> songs = this.songRepository.findAllByGenre(genre);
         if (songs.size() == 0) {
@@ -190,52 +189,52 @@ public class SongService extends AbstractService {
     }
 
     public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre, String description, MultipartFile songFile) {
-        User currentUser = findUserById(uid);
-        String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
-        String nameUrl = "uploadedSongs" + File.separator + System.nanoTime() + "." + extension;
+    User currentUser = findUserById(uid);
+    String extension = FilenameUtils.getExtension(songFile.getOriginalFilename());
+    String nameUrl = "uploadedSongs" + File.separator + System.nanoTime() + "." + extension;
         if (!extension.equals("mp3")) {
-            throw new BadRequestException("You are trying to upload an invalid file. You have to select an mp3 file.");
-        }
+        throw new BadRequestException("You are trying to upload an invalid file. You have to select an mp3 file.");
+    }
         if (songFile.getSize() > MAX_FILESIZE) {
-            throw new BadRequestException("The size of the song is too large.");
-        }
+        throw new BadRequestException("The size of the song is too large.");
+    }
 
-        Song uploadedSong = new Song();
-        ObjectMetadata metaData = new ObjectMetadata();
+    Song uploadedSong = new Song();
+    ObjectMetadata metaData = new ObjectMetadata();
         metaData.setContentType("audio/mpeg");
         metaData.setContentLength(songFile.getSize());
 
         if (songUploadValidation(title, artist, genre)) {
-            File f = new File(nameUrl);
-            if (!f.exists()) {
-                try {
-                    Files.copy(songFile.getInputStream(), f.toPath());
-                } catch (IOException e) {
-                    throw new BadRequestException(e.getMessage(), e);
-                }
-            } else {
-                throw new BadRequestException("The file already exists!");
-            }
-
+        File f = new File(nameUrl);
+        if (!f.exists()) {
             try {
-                this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
-                uploadedSong.setUploader(currentUser);
-                uploadedSong.setTitle(title);
-                uploadedSong.setArtist(artist);
-                uploadedSong.setGenre(genre);
-                uploadedSong.setCreatedAt(LocalDateTime.now());
-                uploadedSong.setListened(0);
-                uploadedSong.setUrl(nameUrl);
-                if (description != null) {
-                    uploadedSong.setDescription(description);
-                }
-                this.songRepository.save(uploadedSong);
-            } catch (AmazonServiceException | IOException e) {
-                throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
+                Files.copy(songFile.getInputStream(), f.toPath());
+            } catch (IOException e) {
+                throw new BadRequestException(e.getMessage(), e);
             }
+        } else {
+            throw new BadRequestException("The file already exists!");
         }
-        return modelMapper.map(uploadedSong, ResponseSongUploadDTO.class);
+
+        try {
+            this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
+            uploadedSong.setUploader(currentUser);
+            uploadedSong.setTitle(title);
+            uploadedSong.setArtist(artist);
+            uploadedSong.setGenre(genre);
+            uploadedSong.setCreatedAt(LocalDateTime.now());
+            uploadedSong.setListened(0);
+            uploadedSong.setUrl(nameUrl);
+            if (description != null) {
+                uploadedSong.setDescription(description);
+            }
+            this.songRepository.save(uploadedSong);
+        } catch (AmazonServiceException | IOException e) {
+            throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
+        }
     }
+        return modelMapper.map(uploadedSong, ResponseSongUploadDTO.class);
+}
 
 
     public ResponseSongDeleteDTO deleteSong(long uid, long sid) {
@@ -334,28 +333,33 @@ public class SongService extends AbstractService {
         }
     }
 
-    //da se opravi logikata sys setvaneto!!! vseki put se syzdava nov lissener i ne se incrementira stoinosta
 
     public void play(long sid, long userId, HttpServletResponse response) {
         Song song = findSongById(sid);
         Optional<User> user = userRepository.findById(userId);
+        ListenedKey listenedKey = new ListenedKey();
+        listenedKey.setSongId(song.getId());
+        Listened listened = new Listened();
+        listened.setSong(song);
+        boolean isHere = false;
         if (user.isPresent()) {
-            ListenedKey listenedKey = new ListenedKey();
-            listenedKey.setSongId(song.getId());
-            Listened listened = new Listened();
-            listened.setSong(song);
-            listenedKey.setUserId(user.get().getId());
             listened.setUser(user.get());
-            if (!(song.getListeners().contains(listened))) {
-                System.out.println("22");
+            listenedKey.setUserId(user.get().getId());
+            for (Listened l : song.getListeners()) {
+                if (l.getSong().getId() == song.getId() && l.getUser().getId() == user.get().getId()) {
+                    isHere = true;
+                    listened = l;
+                    break;
+                }
+            }
+            if (!isHere) {
                 song.setListened(song.getListened() + 1);
                 listened.setId(listenedKey);
-                listened.setListened(listened.getListened() + 1);
-                System.out.println(listened.getListened());
+                listened.setListened(listened.getListened() + 2);
                 listenedRepository.save(listened);
                 songRepository.save(song);
             } else {
-                System.out.println("11");
+                listened.setId(listenedKey);
                 listened.setListened(listened.getListened() + 1);
                 listenedRepository.save(listened);
             }
@@ -363,28 +367,27 @@ public class SongService extends AbstractService {
             song.setListened(song.getListened() + 1);
             songRepository.save(song);
         }
-
         String nameOfFile = song.getUrl().substring(song.getUrl().indexOf(File.separator));
         System.out.println(nameOfFile);
         File songToPlay = new File("uploadedSongs" + File.separator + nameOfFile);
-        if(!songToPlay.exists()){
+        if (!songToPlay.exists()) {
             throw new NotFoundException("Song does not exist");
-        } else{
+        } else {
             try {
                 response.setContentType(Files.probeContentType(songToPlay.toPath()));
-                Files.copy(songToPlay.toPath(),response.getOutputStream());
+                Files.copy(songToPlay.toPath(), response.getOutputStream());
             } catch (IOException e) {
                 throw new BadRequestException("Problem with output stream.");
             }
         }
     }
 
-    public byte[] downloadSong(@PathVariable String songName){
+    public byte[] downloadSong(@PathVariable String songName) {
         S3Object songFile = storageClient.getObject(STORAGE_BUCKET_NAME, songName);
         S3ObjectInputStream inputStream = songFile.getObjectContent();
 
         try {
-        byte[] content = IOUtils.toByteArray(inputStream);
+            byte[] content = IOUtils.toByteArray(inputStream);
             return content;
         } catch (AmazonServiceException | IOException e) {
             throw new FileException("Problem with song downloading - " + e.getMessage());

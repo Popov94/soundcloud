@@ -2,7 +2,6 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.song.ResponseSongDTO;
 import com.example.soundcloud.models.dto.user.*;
-import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import lombok.SneakyThrows;
@@ -148,13 +147,15 @@ public class UserController extends GlobalController {
         return new APIResponse<>(users.getSize(), users);
     }
 
-//    @GetMapping("/home")
-//    public HashMap<String, List<ResponseSongDTO>> homePage(HttpServletRequest request){
-//        HttpSession session = request.getSession();
-//        if (session.getAttribute(LOGGED) != null){
-//            long userId = (long) session.getAttribute(USER_ID);
-//            return userService.homePageForLogged(userId);
-//        }
-//    }
+    @GetMapping("/home")
+    public HashMap<String, List<ResponseSongDTO>> homePage(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        if (session.getAttribute(LOGGED) != null) {
+            long userId = (long) session.getAttribute(USER_ID);
+            return userService.homePageForLogged(userId);
+        } else {
+            return userService.homePageForNonLoged();
+        }
+    }
 
 }

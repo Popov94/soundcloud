@@ -12,6 +12,7 @@ import lombok.Synchronized;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +30,7 @@ public class PlaylistService extends AbstractService {
 
     }
 
+    @Transactional
     public ResponsePLDTO createPlayList(CreatePlaylistDTO dto, long userId) {
         if (utility.PlaylistNameValidation(dto.getName()) && !utility.isPlaylistExist(dto.getName())) {
             User user = findUserById(userId);
@@ -44,7 +46,7 @@ public class PlaylistService extends AbstractService {
         }
     }
 
-    @Synchronized
+    @Transactional
     public ResponsePLDTO addSongInPlaylist(long playlistId, long songId, long userId) {
         User owner = findUserById(userId);
         Playlist playlist = findPlaylistById(playlistId);
@@ -69,6 +71,7 @@ public class PlaylistService extends AbstractService {
         return dto;
     }
 
+    @Transactional
     public String deletePlaylist(long playlistId, long userId) {
         User owner = findUserById(userId);
         Playlist playlist = findPlaylistById(playlistId);
@@ -80,6 +83,7 @@ public class PlaylistService extends AbstractService {
         }
     }
 
+    @Transactional
     public ResponsePLDTO removeSongFromPlayList(long playlistId, long songId, long userId) {
         Playlist playlist = findPlaylistById(playlistId);
         Song song = findSongById(songId);

@@ -1,7 +1,7 @@
 package com.example.soundcloud.service;
 
-import com.example.soundcloud.models.dto.playlist.ResponsePLDTO;
 import com.example.soundcloud.models.dto.song.ResponseSongDTO;
+import com.example.soundcloud.models.dto.song.ResponseSongFilterDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
@@ -155,6 +155,7 @@ public class UserService extends AbstractService {
         return userRepository.findAll().stream().map(user -> modelMapper.map(user, UserWithoutPDTO.class)).collect(Collectors.toList());
     }
 
+    @Transactional
     public UserWithoutPDTO editProfile(EditDTO dto, long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
         if (utility.editProfileValidation(dto, id)) {
@@ -271,7 +272,6 @@ public class UserService extends AbstractService {
         } else {
             throw new BadRequestException("Code is wrong!");
         }
-
     }
 
     public List<UserWithoutPWithSongsDTO> getUserByName(String userName) {
@@ -367,12 +367,51 @@ public class UserService extends AbstractService {
 
     }
 
-//    public HashMap<String, List<ResponseSongDTO>> homePageForLogged(long userId) {
-//        User user = findUserById(userId);
-//        HashMap<String, List<ResponseSongDTO>> suitForUser = new HashMap<>();
-//        suitForUser.put("Last played songs", new ArrayList<>());
-//        suitForUser.put("Last ten liked songs", new ArrayList<>());
-//        suitForUser.put("Ten non-listened songs from the genre he listen the most", new ArrayList<>());
-//        ArrayList<ResponseSongDTO> =
-//    }
+    public HashMap<String, List<ResponseSongDTO>> homePageForLogged(long userId) {
+        User user = findUserById(userId);
+        HashMap<String, List<ResponseSongDTO>> suitForUser = new HashMap<>();
+        suitForUser.put("Five of most played songs", new ArrayList<>());
+        suitForUser.put("Last five liked songs", new ArrayList<>());
+        suitForUser.put("Suitable for user", new ArrayList<>());
+        List<ResponseSongDTO> mostListened = songRepository.findFiveMostListenedForUser(userId)
+                .stream()
+                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        suitForUser.put("Five of most played songs",mostListened);
+        List<ResponseSongDTO> mostLiked = songRepository.findFiveMostLikedForUser(userId)
+                .stream()
+                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        suitForUser.put("Last five liked songs",mostListened);
+        List<ResponseSongDTO> suitableForUser = songRepository.findFiveSuitableForUser(userId)
+                .stream().
+                map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        suitForUser.put("Suitable for user", suitableForUser);
+
+        return suitForUser;
+    }
+
+    public HashMap<String, List<ResponseSongDTO>> homePageForNonLoged() {
+        HashMap<String, List<ResponseSongDTO>> responseForNonLoggedUsers = new HashMap<>();
+        responseForNonLoggedUsers.put("Most listened songs at all",new ArrayList<>());
+        List<ResponseSongDTO> mostListened = songRepository.FindFiveMostListenedAtAll()
+                .stream()
+                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        responseForNonLoggedUsers.put("Most listened songs at all",mostListened);
+        responseForNonLoggedUsers.put("Most liked songs at all",new ArrayList<>());
+        List<ResponseSongDTO> mostLiked = songRepository.FindFiveMostLikedAtAll()
+                .stream()
+                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        responseForNonLoggedUsers.put("Most liked songs at all",mostListened);
+        responseForNonLoggedUsers.put("Most commented songs at all",new ArrayList<>());
+        List<ResponseSongDTO> mostCommented = songRepository.FindFiveMostCommentedAtAll()
+                .stream()
+                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .collect(Collectors.toList());
+        responseForNonLoggedUsers.put("Most commented songs at all",mostListened);
+        return responseForNonLoggedUsers;
+    }
 }
