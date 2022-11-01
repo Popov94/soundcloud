@@ -3,25 +3,16 @@ package com.example.soundcloud.controllers;
 import com.example.soundcloud.models.dto.DislikeDTO;
 import com.example.soundcloud.models.dto.LikeDTO;
 import com.example.soundcloud.models.dto.song.*;
-//import com.example.soundcloud.models.dto.user.EditDTO;
-//import com.example.soundcloud.models.dto.user.UserWithoutPDTO;
 import com.example.soundcloud.models.dto.user.APIResponse;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.data.domain.Page;
-//import org.springframework.jdbc.core.JdbcTemplate;
-//import org.springframework.security.core.parameters.P;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-//import javax.servlet.http.HttpSession;
-//import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -40,7 +31,7 @@ public class SongController extends GlobalController {
         return songService.getSongInfo(sid);
     }
 
-    @GetMapping("/songs/by_username/{uid}")
+    @GetMapping("/songs/by_userId/{uid}")
     public List<ResponseGetSongInfoDTO> searchByUserId(@PathVariable long uid) {
         return this.songService.searchByUploader(uid);
     }

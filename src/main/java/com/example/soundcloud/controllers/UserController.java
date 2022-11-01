@@ -6,11 +6,11 @@ import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import lombok.SneakyThrows;
 import org.springframework.data.domain.Page;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
@@ -19,23 +19,25 @@ import java.util.List;
 public class UserController extends GlobalController {
 
     @PostMapping("/users")
-    public UserWithoutPDTO register(@RequestBody RegisterDTO user) {
-        return userService.register(user);
+    public UserWithoutPDTO register(@RequestBody RegisterDTO user, HttpServletRequest request) {
+        return userService.register(user, getRequestSiteURL(request));
     }
 
-//    @GetMapping("/users")
-//    public List<UserWithoutPDTO> getAllUsers() {
-//        return userService.getAllUsers();
-//    }
+    private String getRequestSiteURL(HttpServletRequest request) {
+        String siteURL = request.getRequestURL().toString();
+        System.out.println(request.getRequestURL());
+        System.out.println(request.getServletPath());
+        return siteURL.replace(request.getServletPath(), "");
+    }
 
     @GetMapping("/users/{id}")
     public UserWithoutPDTO getUserById(@PathVariable long id) {
         return userService.getUserById(id);
     }
 
-    @PostMapping("/users/verify")
-    public String verifyAccount(@RequestBody VerifyDTO dto) {
-        return userService.verifyAccount(dto);
+    @GetMapping("/verify")
+    public String verifyAccount(@Param("code") String code){
+        return userService.verifyAccount(code);
     }
 
     @GetMapping("/users/{id}/songs")
@@ -45,7 +47,7 @@ public class UserController extends GlobalController {
 
     @PostMapping("/auth")
     @SneakyThrows
-    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req, HttpServletResponse resp) {
+    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req) {
         UserWithoutPDTO user = userService.login(dto);
         HttpSession session = req.getSession();
         if (session.getAttribute("LOGGED") != null) {
@@ -57,9 +59,6 @@ public class UserController extends GlobalController {
             logUser(req, user.getId());
             if (!userService.isUserVerified(user.getId())) {
                 session.invalidate();
-//                String[] text = user.getEmail().split("@");
-//                String url = "https://" + text[text.length-1];
-//                resp.sendRedirect(url);
                 throw new MethodNotAllowedException("You have to confirm your registration!");
             }
             return user;
@@ -106,7 +105,6 @@ public class UserController extends GlobalController {
         return userService.deleteProfileImage(userId);
     }
 
-    //return user with his songs or without??
     @GetMapping("/users/search/{userName}")
     public List<UserWithoutPWithSongsDTO> getUserByName(@PathVariable String userName) {
         return userService.getUserByName(userName);

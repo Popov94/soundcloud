@@ -220,8 +220,8 @@ public class SongService extends AbstractService {
                 if (description != null) {
                     uploadedSong.setDescription(description);
                 }
-                this.songRepository.save(uploadedSong);
-            } catch (AmazonServiceException | IOException e) {
+                    this.songRepository.save(uploadedSong);
+                } catch (AmazonServiceException | IOException e) {
                 throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
             }
         }
@@ -314,7 +314,7 @@ public class SongService extends AbstractService {
     }
 
     protected boolean artistValidation(String artist) {
-        String regex = "^[a-zA-Z0-9_ !$%^&*)(]{2,40}$";// artist may contains only characters between A-Z/a-z, digits 0-9 and special symbols as space,!$%^&*() !
+        String regex = "^[a-zA-Z0-9_ !$%^&*)(]{2,40}$";
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(artist);
         boolean isMatching = m.matches();

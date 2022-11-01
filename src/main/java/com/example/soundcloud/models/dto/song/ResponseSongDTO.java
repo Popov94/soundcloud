@@ -12,9 +12,6 @@ public class ResponseSongDTO {
     private String genre;
     private String artist;
     private int listened;
-    private int likes;
-    private int dislikes;
-    private int comments;
     private String url;
     private LocalDateTime createdAt;
     private String description;

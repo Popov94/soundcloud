@@ -1,9 +1,7 @@
 package com.example.soundcloud.controllers;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.NotFoundException;
-import com.example.soundcloud.models.repositories.SongRepository;
 import com.example.soundcloud.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;

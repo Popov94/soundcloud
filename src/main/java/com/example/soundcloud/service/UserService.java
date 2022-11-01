@@ -1,7 +1,6 @@
 package com.example.soundcloud.service;
 
 import com.example.soundcloud.models.dto.song.ResponseSongDTO;
-import com.example.soundcloud.models.dto.song.ResponseSongFilterDTO;
 import com.example.soundcloud.models.dto.song.SongWithoutUserDTO;
 import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
@@ -46,20 +45,14 @@ public class UserService extends AbstractService {
     private JavaMailSender mailSender;
 
     @Transactional
-    public UserWithoutPDTO register(RegisterDTO userDTO) {
+    public UserWithoutPDTO register(RegisterDTO userDTO, String siteURL) {
         if (utility.validateRegistration(userDTO)) {
             User user = modelMapper.map(userDTO, User.class);
             user.setCreatedAt(LocalDateTime.now());
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
             String verificationCode = RandomString.make(64);
             user.setVerificationCode(verificationCode);
-            try {
-                sendVerificationEmail(user);
-            } catch (MessagingException e) {
-                throw new BadRequestException(e.getMessage(), e);
-            } catch (UnsupportedEncodingException e) {
-                throw new BadRequestException(e.getMessage(), e);
-            }
+            sendVerificationEmail(user, siteURL);
             userRepository.save(user);
             return modelMapper.map(user, UserWithoutPDTO.class);
         } else {
@@ -67,25 +60,35 @@ public class UserService extends AbstractService {
         }
     }
 
-    private void sendVerificationEmail(User user)
-            throws MessagingException, UnsupportedEncodingException {
-        String toAddress = user.getEmail();
-        String fromAddress = "soundcloudtests14@gmail.com";
-        String senderName = "Sound Cloud";
-        String subject = "Please verify your registration";
-        String content = "Dear [[name]],<br>"
-                + "Please use the generated code below to verify your registration:<br>"
-                + "<h3><a href=\"[[URL]]\" target=\"_self\">CODE: " + user.getVerificationCode() + " </a></h3>"
-                + "Thank you,<br>"
-                + "Sound Cloud-IT Talents s14.";
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
-        helper.setFrom(fromAddress, senderName);
-        helper.setTo(toAddress);
-        helper.setSubject(subject);
-        content = content.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
-        helper.setText(content, true);
-        mailSender.send(message);
+    private void sendVerificationEmail(User user, String siteURL) {
+        new Thread(() -> {
+            try {
+                String toAddress = user.getEmail();
+                String fromAddress = "soundcloudtests14@gmail.com";
+                String senderName = "Sound Cloud";
+                String subject = "Please verify your registration";
+                String content = "Dear [[name]],<br>"
+                        + "Please click the link below to verify your registration:<br>"
+                        + "<h3><a href=\"[[URL]]\" target=\"_self\">CLICK HERE TO VERIFY</a></h3>"
+                        + "Thank you,<br>"
+                        + "Sound Cloud.";
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message);
+                helper.setFrom(fromAddress, senderName);
+                helper.setTo(toAddress);
+                helper.setSubject(subject);
+                content = content.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
+                helper.setText(content, true);
+                String verifyURL = siteURL + "/verify?code=" + user.getVerificationCode();
+                content = content.replace("[[URL]]", verifyURL);
+                helper.setText(content, true);
+                mailSender.send(message);
+            }  catch (MessagingException e) {
+                throw new BadRequestException(e.getMessage(), e);
+            } catch (UnsupportedEncodingException e) {
+                throw new BadRequestException(e.getMessage(), e);
+            }
+        }).start();
     }
 
     @Scheduled(cron = "0 0 12 15 * *")
@@ -149,10 +152,6 @@ public class UserService extends AbstractService {
         User user = findUserById(id);
         UserWithoutPDTO dto = modelMapper.map(user, UserWithoutPDTO.class);
         return dto;
-    }
-
-    public List<UserWithoutPDTO> getAllUsers() {
-        return userRepository.findAll().stream().map(user -> modelMapper.map(user, UserWithoutPDTO.class)).collect(Collectors.toList());
     }
 
     @Transactional
@@ -259,18 +258,16 @@ public class UserService extends AbstractService {
         return dto;
     }
 
-    public String verifyAccount(VerifyDTO dto) {
-        Optional<User> optionalUser = userRepository.findUserByVerificationCode(dto.getCode());
+    public String verifyAccount(String code) {
+        Optional<User> optionalUser = userRepository.findUserByVerificationCode(code);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            if (user.isVerified()) {
-                throw new BadRequestException("You already verified yourself!");
-            }
             user.setVerified(true);
+            user.setVerificationCode(null);
             userRepository.save(user);
             return "You have been verified successfully";
         } else {
-            throw new BadRequestException("Code is wrong!");
+            throw new BadRequestException("You are already verified!");
         }
     }
 
@@ -334,17 +331,6 @@ public class UserService extends AbstractService {
         return "You have unfollowed " + followedUser.getFirstName() + " " + followedUser.getLastName();
     }
 
-//    @PostConstruct
-//    public void initDB() {
-//        List<User> users = IntStream.
-//                rangeClosed(1, 200).
-//                mapToObj(i -> new User("erkan2134!" + i, "Erkan1234!", "Erkan1234!",
-//                        "erkan2134" + i + "@gmail.com", LocalDate.now(), LocalDateTime.now(), "Male"))
-//                .collect(Collectors.toList());
-//        userRepository.saveAll(users);
-//    }
-
-
     public Page<UserWithoutPDTO> findAllUsersWithPagination(int offset, int pageSize) {
         Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize)).
                 map(user -> modelMapper.map(user, UserWithoutPDTO.class));
@@ -375,17 +361,17 @@ public class UserService extends AbstractService {
         suitForUser.put("Suitable for user", new ArrayList<>());
         List<ResponseSongDTO> mostListened = songRepository.findFiveMostListenedForUser(userId)
                 .stream()
-                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        suitForUser.put("Five of most played songs",mostListened);
+        suitForUser.put("Five of most played songs", mostListened);
         List<ResponseSongDTO> mostLiked = songRepository.findFiveMostLikedForUser(userId)
                 .stream()
-                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        suitForUser.put("Last five liked songs",mostListened);
+        suitForUser.put("Last five liked songs", mostListened);
         List<ResponseSongDTO> suitableForUser = songRepository.findFiveSuitableForUser(userId)
                 .stream().
-                map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
         suitForUser.put("Suitable for user", suitableForUser);
 
@@ -394,24 +380,24 @@ public class UserService extends AbstractService {
 
     public HashMap<String, List<ResponseSongDTO>> homePageForNonLoged() {
         HashMap<String, List<ResponseSongDTO>> responseForNonLoggedUsers = new HashMap<>();
-        responseForNonLoggedUsers.put("Most listened songs at all",new ArrayList<>());
+        responseForNonLoggedUsers.put("Most listened songs at all", new ArrayList<>());
         List<ResponseSongDTO> mostListened = songRepository.FindFiveMostListenedAtAll()
                 .stream()
-                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        responseForNonLoggedUsers.put("Most listened songs at all",mostListened);
-        responseForNonLoggedUsers.put("Most liked songs at all",new ArrayList<>());
+        responseForNonLoggedUsers.put("Most listened songs at all", mostListened);
+        responseForNonLoggedUsers.put("Most liked songs at all", new ArrayList<>());
         List<ResponseSongDTO> mostLiked = songRepository.FindFiveMostLikedAtAll()
                 .stream()
-                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        responseForNonLoggedUsers.put("Most liked songs at all",mostListened);
-        responseForNonLoggedUsers.put("Most commented songs at all",new ArrayList<>());
+        responseForNonLoggedUsers.put("Most liked songs at all", mostListened);
+        responseForNonLoggedUsers.put("Most commented songs at all", new ArrayList<>());
         List<ResponseSongDTO> mostCommented = songRepository.FindFiveMostCommentedAtAll()
                 .stream()
-                .map(song -> modelMapper.map(song,ResponseSongDTO.class))
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        responseForNonLoggedUsers.put("Most commented songs at all",mostListened);
+        responseForNonLoggedUsers.put("Most commented songs at all", mostListened);
         return responseForNonLoggedUsers;
     }
 }
