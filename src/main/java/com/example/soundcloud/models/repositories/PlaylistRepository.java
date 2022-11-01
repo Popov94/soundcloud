@@ -18,7 +18,7 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
     @Query(value = "SELECT songs_id FROM playlists_songs WHERE playlists_id = :playlistId", nativeQuery = true)
     public List<Long> findAllSongsInPlaylist(@Param("playlistId") long playlistId);
 
-    @Query(value = "SELECT * FROM playlists AS p WHERE p.name like %:keyword%", nativeQuery = true)
+    @Query(value = "SELECT * FROM playlists AS p WHERE p.name LIKE %:keyword%", nativeQuery = true)
     public List<Playlist> findPlaylistByName(@Param("keyword") String keyword);
 
     @Query(value = "SELECT * FROM playlists JOIN users ON(playlists.owner_id = users.id) WHERE users.username LIKE %:keyword%", nativeQuery = true)

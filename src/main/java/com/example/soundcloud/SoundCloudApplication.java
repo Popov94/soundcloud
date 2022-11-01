@@ -65,8 +65,4 @@ public class SoundCloudApplication {
 
         return mailSender;
     }
-
-
-
-
 }

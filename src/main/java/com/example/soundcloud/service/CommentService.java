@@ -94,6 +94,9 @@ public class CommentService extends AbstractService {
     public LikeDTO like(long cid, long uid) {
         Comment comment = commentRepository.findCommentById(cid);
         User user = findUserById(uid);
+        if (comment.getCommentDislikers().contains(user)) {
+            user.getDislikedComments().remove(comment);
+        }
         if (user.getLikedComments().contains(comment)) {
             user.getLikedComments().remove(comment);
             userRepository.save(user);
@@ -108,6 +111,9 @@ public class CommentService extends AbstractService {
     public DislikeDTO dislike(long cid, long uid) {
         Comment comment = commentRepository.findCommentById(cid);
         User user = findUserById(uid);
+        if (comment.getCommentLikers().contains(user)) {
+            user.getLikedComments().remove(comment);
+        }
         if (user.getDislikedComments().contains(comment)) {
             user.getDislikedComments().remove(comment);
             userRepository.save(user);
@@ -119,26 +125,13 @@ public class CommentService extends AbstractService {
         }
     }
 
-    public void isCommentDisliked(long cid, long uid) {
-        Comment comment = commentRepository.findCommentById(cid);
-        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (comment.getCommentDislikers().contains(currentUser)) {
-            currentUser.getDislikedComments().remove(comment);
-        }
-    }
-
-    public void isCommentLiked(long cid, long uid) {
-        Comment comment = commentRepository.findCommentById(cid);
-        User currentUser = modelMapper.map(userRepository.findById(uid), User.class);
-        if (comment.getCommentLikers().contains(currentUser)) {
-            currentUser.getLikedComments().remove(comment);
-        }
-    }
 
     @Transactional
-    public CommentedCommentDTO commentComment(long songId, long userId, CreateCommentDTO dto, long commentId) {
+    public CommentedCommentDTO commentComment(long userId, CreateCommentDTO dto, long commentId) {
         if (utility.isTextValid(dto)) {
             User user = findUserById(userId);
+            Comment comment = findCommentById(commentId);
+            long songId = comment.getCommentedSong().getId();
             Song song = findSongById(songId);
             Comment parentC = findCommentById(commentId);
             Comment childC = new Comment();

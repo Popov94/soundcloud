@@ -1,6 +1,7 @@
 package com.example.soundcloud.service;
 
 import com.example.soundcloud.models.dto.comment.CreateCommentDTO;
+import com.example.soundcloud.models.dto.song.RequestSongEditDTO;
 import com.example.soundcloud.models.dto.user.EditDTO;
 import com.example.soundcloud.models.dto.user.RegisterDTO;
 import com.example.soundcloud.models.exceptions.BadRequestException;
@@ -258,6 +259,64 @@ public class Utility {
             }
         } else {
             throw new BadRequestException("You can not leave empty comment. You can delete it instead!");
+        }
+    }
+
+
+//    Song Validation
+    protected boolean songUploadValidation(String title, String artist, String genre) {
+        if (titleValidation(title) &&
+                artistValidation(artist) &&
+                genreValidation(genre)) {
+            return true;
+        } else {
+            throw new BadRequestException("Invalid song data!");
+        }
+    }
+
+    protected boolean songEditValidation(RequestSongEditDTO song) {
+        if (titleValidation(song.getTitle()) &&
+                artistValidation(song.getArtist()) &&
+                genreValidation(song.getGenre())) {
+            return true;
+        } else {
+            throw new BadRequestException("Invalid song data!");
+        }
+    }
+
+    protected boolean titleValidation(String title) {
+        String regex = "^[a-zA-Z0-9_ !$%^&*-`)(]{2,40}$";
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(title);
+        boolean isMatching = m.matches();
+        if (!title.isBlank() && isMatching) {
+            return true;
+        } else {
+            throw new BadRequestException("The title is invalid!");
+        }
+    }
+
+    protected boolean genreValidation(String genre) {
+        String regex = "^[A-Za-z\\s-]{2,29}$"; // it allows to use upper/lower case spaces and -
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(genre);
+        boolean isMatching = m.matches();
+        if (!genre.isBlank() && isMatching) {
+            return true;
+        } else {
+            throw new BadRequestException("The genre is invalid!");
+        }
+    }
+
+    protected boolean artistValidation(String artist) {
+        String regex = "^[a-zA-Z0-9_ !$%^&*)(]{2,40}$";// artist may contains only characters between A-Z/a-z, digits 0-9 and special symbols as space,!$%^&*() !
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(artist);
+        boolean isMatching = m.matches();
+        if (!artist.isBlank() && isMatching) {
+            return true;
+        } else {
+            throw new BadRequestException("The artist is invalid! It may contains uppercase and lowercase letters, numbers and special characters as !$%^&*()!");
         }
     }
 }
