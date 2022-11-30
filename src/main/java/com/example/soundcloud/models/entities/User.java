@@ -2,6 +2,7 @@ package com.example.soundcloud.models.entities;
 
 
 import com.example.soundcloud.models.entities.listeners.Listened;
+import com.example.soundcloud.service.UserService;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 

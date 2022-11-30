@@ -2,21 +2,30 @@ package com.example.soundcloud.controllers;
 
 import com.example.soundcloud.models.dto.song.ResponseSongDTO;
 import com.example.soundcloud.models.dto.user.*;
+import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import lombok.SneakyThrows;
+import lombok.extern.java.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 public class UserController extends GlobalController {
+
+    private ConcurrentHashMap<String,Integer> logManager = new ConcurrentHashMap<>();
+    private int counter = 0;
 
     @PostMapping("/users")
     public UserWithoutPDTO register(@RequestBody RegisterDTO user, HttpServletRequest request) {
@@ -45,11 +54,27 @@ public class UserController extends GlobalController {
         return userService.getUserSongsById(id);
     }
 
+    private void checkLog(HttpServletRequest req, LoginDTO dto,HttpServletResponse resp) {
+        if (!userService.checkLog(dto)) {
+            String username = dto.getUsername();
+            if (!logManager.containsKey(username)) {
+                logManager.put(username,1);
+            } else {
+                logManager.put(username, logManager.get(username)+1);
+                logChecker(req, username, logManager.get(username));
+            }
+        }
+    }
+
     @PostMapping("/auth")
     @SneakyThrows
-    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req) {
-        UserWithoutPDTO user = userService.login(dto);
+    public UserWithoutPDTO logIn(@RequestBody LoginDTO dto, HttpServletRequest req, HttpServletResponse resp) {
+        if (isBlocked(dto.getUsername())){
+            throw new UnauthorizedException("You have reached the limit of tries to log in. Try again after 12 hour!");
+        }
         HttpSession session = req.getSession();
+        checkLog(req,dto,resp);
+        UserWithoutPDTO user = userService.login(dto);
         if (session.getAttribute("LOGGED") != null) {
             throw new MethodNotAllowedException("You are already logged in as " + user.getFirstName() +
                     " " + user.getLastName() + "," +
@@ -61,6 +86,7 @@ public class UserController extends GlobalController {
                 session.invalidate();
                 throw new MethodNotAllowedException("You have to confirm your registration!");
             }
+            logManager.remove(user.getUsername());
             return user;
         } else {
             throw new UnauthorizedException("Wrong username or password!");

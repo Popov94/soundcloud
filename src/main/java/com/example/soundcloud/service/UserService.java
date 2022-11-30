@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +44,9 @@ public class UserService extends AbstractService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    private boolean ckeckLog = true;
+    private AtomicInteger countFailedLo = new AtomicInteger(0);
 
     @Transactional
     public UserWithoutPDTO register(RegisterDTO userDTO, String siteURL) {
@@ -399,5 +403,15 @@ public class UserService extends AbstractService {
                 .collect(Collectors.toList());
         responseForNonLoggedUsers.put("Most commented songs at all", mostListened);
         return responseForNonLoggedUsers;
+    }
+
+    public boolean checkLog(LoginDTO dto) {
+        Optional<User> optionalUser = userRepository.findUserByUsername(dto.getUsername());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (bCryptPasswordEncoder.matches(dto.getPassword(), user.getPassword())) {
+                return true;
+            }
+        } return false;
     }
 }

@@ -18,8 +18,6 @@ import java.util.List;
 
 @RestController
 public class SongController extends GlobalController {
-    @Autowired
-    private SongService songService;
 
     @GetMapping("/songs/{sid}")
     public ResponseSongDTO getSongWithUserById(@PathVariable long sid) {

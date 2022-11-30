@@ -9,18 +9,27 @@ import com.example.soundcloud.service.CommentService;
 import com.example.soundcloud.service.PlaylistService;
 import com.example.soundcloud.service.SongService;
 import com.example.soundcloud.service.UserService;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.File;
+import javax.swing.text.html.parser.Entity;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 @RestController
 public abstract class GlobalController {
@@ -28,6 +37,9 @@ public abstract class GlobalController {
     public static final String LOGGED = "LOGGED";
     public static final String USER_ID = "USER_ID";
     public static final String REMOTE_IP = "REMOTE_IP";
+    private static final String FAILED_LOG = "FAILED_LOG";
+    private static final String USER_NAME = "USER_NAME";
+    private ConcurrentHashMap<String, LocalDateTime> blockedUsers = new ConcurrentHashMap<>();
 
     @Autowired
     protected UserRepository userRepository;
@@ -108,6 +120,41 @@ public abstract class GlobalController {
         session.setAttribute(USER_ID, id);
         session.setAttribute(REMOTE_IP, req.getRemoteAddr());
         session.setMaxInactiveInterval(30 * 60);
+    }
+
+    public void logChecker(HttpServletRequest req, String username, int failedLog){
+        HttpSession session = req.getSession();
+        session.setAttribute(USER_NAME, username);
+        session.setAttribute(FAILED_LOG, failedLog);
+        blockAccount(session, username);
+    }
+
+    @SneakyThrows
+    public void blockAccount(HttpSession session, String username){
+        if ((int)session.getAttribute(FAILED_LOG) >= 5){
+            if (blockedUsers.containsKey(username)){
+                return;
+            }else {
+                blockedUsers.put(username, LocalDateTime.now());
+            }
+        }
+    }
+
+    public boolean isBlocked(String username){
+        if (blockedUsers.containsKey(username)){
+            return true;
+        }return false;
+    }
+
+    @Scheduled(cron = "0 0 */1 * * *")
+    @Async
+    public void removeBlock(){
+        Iterator<Map.Entry<String, LocalDateTime>> it = blockedUsers.entrySet().iterator();
+        while (it.hasNext()){
+            if (LocalDateTime.now().isAfter(it.next().getValue().plus(1,ChronoUnit.MINUTES))){
+                it.remove();
+            }
+        }
     }
 
 
