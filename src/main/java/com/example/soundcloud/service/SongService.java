@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,7 +50,7 @@ public class SongService extends AbstractService {
 
     public static final int FIRST_PAGE = 1;
     public static final int SONGS_PER_PAGE = 5;
-    private static final long MAX_FILESIZE = 100 * 1024 * 1024;
+    private static final long MAX_FILESIZE = 150 * 1024 * 1024;
     private static final String STORAGE_BUCKET_NAME = "soundcloudtalents";
 
 
@@ -125,7 +126,7 @@ public class SongService extends AbstractService {
         }
 
         Integer page = filterType.getPage();
-        if (page == null || page == 0) {
+        if (page == null || page <= 0) {
             page = FIRST_PAGE;
         }
 
@@ -182,6 +183,7 @@ public class SongService extends AbstractService {
         return dto;
     }
 
+    @Transactional
     public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre,
                                             String description, MultipartFile songFile) {
         User currentUser = findUserById(uid);
@@ -197,7 +199,8 @@ public class SongService extends AbstractService {
         ObjectMetadata metaData = new ObjectMetadata();
         metaData.setContentType("audio/mpeg");
         metaData.setContentLength(songFile.getSize());
-        if (songUploadValidation(title, artist, genre)) {
+
+        if (utility.songUploadValidation(title, artist, genre)) {
             File f = new File(nameUrl);
             if (!f.exists()) {
                 try {
@@ -220,15 +223,15 @@ public class SongService extends AbstractService {
                 if (description != null) {
                     uploadedSong.setDescription(description);
                 }
-                    this.songRepository.save(uploadedSong);
-                } catch (AmazonServiceException | IOException e) {
+                this.songRepository.save(uploadedSong);
+            } catch (AmazonServiceException | IOException e) {
                 throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
             }
         }
         return modelMapper.map(uploadedSong, ResponseSongUploadDTO.class);
     }
 
-
+    @Transactional
     public ResponseSongDeleteDTO deleteSong(long uid, long sid) {
         Song songToDelete = findSongById(sid);
         User user = findUserById(uid);
@@ -243,12 +246,12 @@ public class SongService extends AbstractService {
         }
     }
 
-
+    @Transactional
     public ResponseGetSongInfoDTO editSong(RequestSongEditDTO dto, long uid, long sid) {
         User user = findUserById(uid);
         Song song = findSongById(sid);
 
-        if (songEditValidation(dto)) {
+        if (utility.songEditValidation(dto)) {
             if (user.getId() == song.getUploader().getId()) {
                 setSongEdit(dto, song);
                 songRepository.save(song);
@@ -269,63 +272,7 @@ public class SongService extends AbstractService {
     }
 
 
-    protected boolean songUploadValidation(String title, String artist, String genre) {
-        if (titleValidation(title) &&
-                artistValidation(artist) &&
-                genreValidation(genre)) {
-            return true;
-        } else {
-            throw new BadRequestException("Invalid song data!");
-        }
-    }
-
-    protected boolean songEditValidation(RequestSongEditDTO song) {
-        if (titleValidation(song.getTitle()) &&
-                artistValidation(song.getArtist()) &&
-                genreValidation(song.getGenre())) {
-            return true;
-        } else {
-            throw new BadRequestException("Invalid song data!");
-        }
-    }
-
-    protected boolean titleValidation(String title) {
-        String regex = "^[a-zA-Z0-9_ !$%^&*-`)(]{2,40}$";
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(title);
-        boolean isMatching = m.matches();
-        if (!title.isBlank() && isMatching) {
-            return true;
-        } else {
-            throw new BadRequestException("The title is invalid!");
-        }
-    }
-
-    protected boolean genreValidation(String genre) {
-        String regex = "^[A-Za-z\\s-]{2,29}$"; // it allows to use upper/lower case spaces and -
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(genre);
-        boolean isMatching = m.matches();
-        if (!genre.isBlank() && isMatching) {
-            return true;
-        } else {
-            throw new BadRequestException("The genre is invalid!");
-        }
-    }
-
-    protected boolean artistValidation(String artist) {
-        String regex = "^[a-zA-Z0-9_ !$%^&*)(]{2,40}$";
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(artist);
-        boolean isMatching = m.matches();
-        if (!artist.isBlank() && isMatching) {
-            return true;
-        } else {
-            throw new BadRequestException("The artist is invalid! It may contains uppercase and lowercase letters, numbers and special characters as !$%^&*()!");
-        }
-    }
-
-
+    @Transactional
     public void play(long sid, long userId, HttpServletResponse response) {
         Song song = findSongById(sid);
         Optional<User> user = userRepository.findById(userId);
@@ -434,21 +381,21 @@ public class SongService extends AbstractService {
     }
 
     public List<ResponseSongFilterDTO> topGenreSongsForUser(long uid, int page) throws SQLException {
-        if (page == 0) {
+        if (page <= 0) {
             page = 1;
         }
         return songDAO.findSongsByGenreForUser(uid, page, SONGS_PER_PAGE);
     }
 
     public List<ResponseSongFilterDTO> topGenreSongs(int page) throws SQLException {
-        if (page == 0) {
+        if (page <= 0) {
             page = 1;
         }
         return songDAO.findSongsByGenre(page, SONGS_PER_PAGE);
     }
 
     public List<ResponseSongFilterDTO> topListened(int page) throws SQLException {
-        if (page == 0) {
+        if (page <= 0) {
             page = 1;
         }
         return songDAO.findTopListened(page, SONGS_PER_PAGE);

@@ -159,9 +159,9 @@ public class UserService extends AbstractService {
     }
 
     @Transactional
-    public UserWithoutPDTO editProfile(EditDTO dto, long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
-        if (utility.editProfileValidation(dto, id)) {
+    public UserWithoutPDTO editProfile(EditDTO dto, long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new MethodNotAllowedException("User initials are wrong!"));
+        if (utility.editProfileValidation(dto, userId)) {
             if (bCryptPasswordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
                 setEdit(dto, user);
                 userRepository.save(user);
@@ -372,10 +372,11 @@ public class UserService extends AbstractService {
                 .stream()
                 .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        suitForUser.put("Last five liked songs", mostListened);
-        List<ResponseSongDTO> suitableForUser = songRepository.findFiveSuitableForUser(userId)
-                .stream().
-                map(song -> modelMapper.map(song, ResponseSongDTO.class))
+        suitForUser.put("Last five liked songs", mostLiked);
+        String mostListenedGenreForUser = songRepository.mostListenedGenreForUser(userId);
+        List<ResponseSongDTO> suitableForUser = songRepository.findFiveSuitableForUser(mostListenedGenreForUser)
+                .stream()
+                .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
         suitForUser.put("Suitable for user", suitableForUser);
 
@@ -395,13 +396,13 @@ public class UserService extends AbstractService {
                 .stream()
                 .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        responseForNonLoggedUsers.put("Most liked songs at all", mostListened);
+        responseForNonLoggedUsers.put("Most liked songs at all", mostLiked);
         responseForNonLoggedUsers.put("Most commented songs at all", new ArrayList<>());
         List<ResponseSongDTO> mostCommented = songRepository.FindFiveMostCommentedAtAll()
                 .stream()
                 .map(song -> modelMapper.map(song, ResponseSongDTO.class))
                 .collect(Collectors.toList());
-        responseForNonLoggedUsers.put("Most commented songs at all", mostListened);
+        responseForNonLoggedUsers.put("Most commented songs at all", mostCommented);
         return responseForNonLoggedUsers;
     }
 

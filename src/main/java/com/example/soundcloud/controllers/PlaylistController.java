@@ -14,7 +14,6 @@ public class PlaylistController extends GlobalController {
 
     @GetMapping("/playlist/{playlistId}")
     public ResponsePLDTO getPlaylistById(@PathVariable long playlistId) {
-        System.out.println(playlistId);
         return playlistService.getPlaylistById(playlistId);
     }
 

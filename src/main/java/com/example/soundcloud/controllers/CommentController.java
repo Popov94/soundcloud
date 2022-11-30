@@ -20,10 +20,10 @@ public class CommentController extends GlobalController {
         return commentService.createComment(songId, userId, dto);
     }
 
-    @PostMapping("/soundcloud/{songId}/comment/{commentId}")
-    public CommentedCommentDTO commentComment(@RequestBody CreateCommentDTO dto, @PathVariable long songId, @PathVariable long commentId, HttpServletRequest req) {
+    @PostMapping("/soundcloud/comment/{commentId}")
+    public CommentedCommentDTO commentComment(@RequestBody CreateCommentDTO dto, @PathVariable long commentId, HttpServletRequest req) {
         long userId = getLoggedUserId(req);
-        return commentService.commentComment(songId, userId, dto,commentId);
+        return commentService.commentComment(userId, dto, commentId);
     }
 
     @PutMapping("/soundcloud/{songId}/{commentId}")
@@ -46,16 +46,12 @@ public class CommentController extends GlobalController {
     @PostMapping("/soundcloud/{cid}/like")
     public LikeDTO like(@PathVariable long cid, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
-        this.commentService.isCommentDisliked(cid, uid);
         return commentService.like(cid, uid);
     }
 
     @PostMapping("/soundcloud/{cid}/dislike")
     public DislikeDTO dislike(@PathVariable long cid, HttpServletRequest request) {
         long uid = getLoggedUserId(request);
-        this.commentService.isCommentLiked(cid, uid);
         return commentService.dislike(cid, uid);
     }
-
-
 }

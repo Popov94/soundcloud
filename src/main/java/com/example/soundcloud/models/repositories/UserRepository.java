@@ -18,14 +18,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     public List<User> findAllByUsername(String username);
     public Optional<User> findUserByUsername(String username);
 
-    @Query(value = "SELECT * FROM users AS u WHERE u.first_name like %:keyword% or u.last_name like %:keyword%", nativeQuery = true)
+    @Query(value = "SELECT * FROM users AS u WHERE u.first_name like %:keyword% OR u.last_name LIKE %:keyword%", nativeQuery = true)
     public List<User> findByKeyword(@Param("keyword") String keyword);
     public Optional<User> findUserByVerificationCode(String code);
     @Query(value = "SELECT following_id FROM followers WHERE follower_id = :followerId", nativeQuery = true)
     public List<Long> getFollowingUsersIds(@Param ("followerId") long followerId);
-    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 15 and users.verified = 0", nativeQuery = true)
+    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 15 AND users.verified = 0", nativeQuery = true)
     public List<User> findAllNonVerifiedUser();
-    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 31 and users.verified = 0", nativeQuery = true)
+    @Query(value = "SELECT * FROM users WHERE DATEDIFF(localtime, users.created_at) > 31 AND users.verified = 0", nativeQuery = true)
     public List<User> findAllNonVerifiedUserForDelete();
 
 }

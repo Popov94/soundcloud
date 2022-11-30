@@ -29,7 +29,7 @@ public class SongController extends GlobalController {
         return songService.getSongInfo(sid);
     }
 
-    @GetMapping("/songs/by_userId/{uid}")
+    @GetMapping("/songs/by_user_id/{uid}")
     public List<ResponseGetSongInfoDTO> searchByUserId(@PathVariable long uid) {
         return this.songService.searchByUploader(uid);
     }
