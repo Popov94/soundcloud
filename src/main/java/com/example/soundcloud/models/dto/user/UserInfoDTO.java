@@ -8,7 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 @Data
 public class UserInfoDTO {
-    @Column
-    private String username;
+
+    private String email;
 
 }

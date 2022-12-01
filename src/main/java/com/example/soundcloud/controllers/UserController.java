@@ -34,8 +34,6 @@ public class UserController extends GlobalController {
 
     private String getRequestSiteURL(HttpServletRequest request) {
         String siteURL = request.getRequestURL().toString();
-        System.out.println(request.getRequestURL());
-        System.out.println(request.getServletPath());
         return siteURL.replace(request.getServletPath(), "");
     }
 
@@ -98,6 +96,16 @@ public class UserController extends GlobalController {
         long userId = getLoggedUserId(req);
         return userService.editProfile(dto, userId);
     }
+
+    @GetMapping("/users/new_password")
+    public String forgotPassword(@RequestBody UserInfoDTO dto,HttpServletRequest request){
+       return userService.forgotPassword(dto,getRequestSiteURL(request));
+    }
+    @PostMapping("/change_password")
+    public String changeForgottenPassword(@RequestBody ChangeForgottenPWDTO dto, @Param("code") String code){
+        return userService.ChangeForgottenPassword(dto,code);
+    }
+
 
     @PostMapping("/logout")
     public String logOut(HttpServletRequest req) {

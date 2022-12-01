@@ -6,6 +6,7 @@ import com.example.soundcloud.models.dto.user.*;
 import com.example.soundcloud.models.entities.User;
 import com.example.soundcloud.models.exceptions.BadRequestException;
 import com.example.soundcloud.models.exceptions.MethodNotAllowedException;
+import com.example.soundcloud.models.exceptions.NotFoundException;
 import com.example.soundcloud.models.exceptions.UnauthorizedException;
 import net.bytebuddy.utility.RandomString;
 import org.apache.commons.io.FilenameUtils;
@@ -414,5 +415,64 @@ public class UserService extends AbstractService {
                 return true;
             }
         } return false;
+    }
+
+    public String forgotPassword(UserInfoDTO dto, String URL) {
+        System.out.println(dto.getEmail());
+        Optional<User> user = userRepository.findUserByEmail(dto.getEmail());
+        if (user.isPresent()){
+            User user1 = user.get();
+            String code = RandomString.make(64);
+            user1.setVerificationCode(code);
+            userRepository.save(user1);
+            sendEmailForNewPassword(user1,URL);
+            return "We've sent instructions how to change your password at your email.";
+        } throw  new NotFoundException("User does not exist!");
+
+    }
+
+    private void sendEmailForNewPassword(User user, String siteURL) {
+        new Thread(() -> {
+            try {
+                String toAddress = user.getEmail();
+                String fromAddress = "soundcloudtests14@gmail.com";
+                String senderName = "Sound Cloud";
+                String subject = "Request to change forgotten password";
+                String content = "Dear [[name]],<br>"
+                        + "Please click the link below to change your password:<br>"
+                        + "<h3><a href=\"[[URL]]\" target=\"_self\">CLICK HERE</a></h3>"
+                        + "If you didn’t request a password change," +
+                        " you can ignore this message and continue to use your current password.,<br>"
+                        + "Sound Cloud.";
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message);
+                helper.setFrom(fromAddress, senderName);
+                helper.setTo(toAddress);
+                helper.setSubject(subject);
+                content = content.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
+                helper.setText(content, true);
+                String verifyURL = siteURL + "/change_password?code=" + user.getVerificationCode();
+                content = content.replace("[[URL]]", verifyURL);
+                helper.setText(content, true);
+                mailSender.send(message);
+            }  catch (MessagingException e) {
+                throw new BadRequestException(e.getMessage(), e);
+            } catch (UnsupportedEncodingException e) {
+                throw new BadRequestException(e.getMessage(), e);
+            }
+        }).start();
+    }
+
+    public String ChangeForgottenPassword(ChangeForgottenPWDTO dto, String code) {
+        Optional<User> user = userRepository.findUserByVerificationCode(code);
+        if (user.isPresent()){
+            User user1 = user.get();
+            if (utility.userPasswordValidation(dto.getNewPassword(),dto.getConfirmNewPassword())){
+                user1.setPassword(bCryptPasswordEncoder.encode(dto.getNewPassword()));
+                user1.setVerificationCode(null);
+                userRepository.save(user1);
+                return "You have changed your password successfully";
+            }
+        } throw new BadRequestException("Something went wrong. If you see this please call the service");
     }
 }

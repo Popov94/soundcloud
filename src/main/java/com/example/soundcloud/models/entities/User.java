@@ -40,7 +40,7 @@ public class User {
     private String password;
     @Transient
     private String confirmPassword;
-    @Column
+    @Column(name = "email")
     private String email;
     @Column(name = "date_of_birth")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
