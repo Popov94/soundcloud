@@ -224,6 +224,7 @@ public class SongService extends AbstractService {
                     uploadedSong.setDescription(description);
                 }
                 this.songRepository.save(uploadedSong);
+                sendEmailToFollowersWhenUpload(uploadedSong,currentUser);
             } catch (AmazonServiceException | IOException e) {
                 throw new FileException("Problem with the uploading of the song to the server - " + e.getMessage());
             }

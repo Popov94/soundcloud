@@ -43,8 +43,7 @@ public class UserService extends AbstractService {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Autowired
-    private JavaMailSender mailSender;
+
 
     private boolean ckeckLog = true;
     private AtomicInteger countFailedLo = new AtomicInteger(0);
@@ -430,6 +429,8 @@ public class UserService extends AbstractService {
         } throw  new NotFoundException("User does not exist!");
 
     }
+
+
 
     private void sendEmailForNewPassword(User user, String siteURL) {
         new Thread(() -> {
