@@ -101,7 +101,7 @@ public class SongService extends AbstractService {
         List<ResponseGetSongDTO> songsDTO = songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
         return songsDTO;
     }
-
+// test
     public List<ResponseSongFilterDTO> filterSongs(RequestSongFilterDTO filterType) throws SQLException {
         String title = filterType.getTitle();
         if (title == null) {
