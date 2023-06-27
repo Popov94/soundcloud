@@ -41,7 +41,7 @@ public class Song {
         @JoinColumn(name = "uploader_id")
         private User uploader;
         @OneToMany(mappedBy = "commentedSong")
-        private List<Comment> comments;
+        private List<Comment> commenters;
         @ManyToMany(mappedBy = "songsInPlaylist")
         private List<Playlist> playlist;
         @ManyToMany(mappedBy = "likedSongs")

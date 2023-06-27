@@ -15,32 +15,33 @@ import java.util.List;
 public class CommentController extends GlobalController {
 
     @PostMapping("/soundcloud/{songId}/comment")
-    public ResponseCommentDTO createComment(@RequestBody CreateCommentDTO dto, @PathVariable long songId, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return commentService.createComment(songId, userId, dto);
+    public ResponseCommentDTO createComment(@RequestBody CreateCommentDTO dto, @PathVariable long sid, HttpServletRequest req) {
+        long uid = getLoggedUserId(req);
+        return commentService.createComment(sid, uid, dto);
     }
 
     @PostMapping("/soundcloud/comment/{commentId}")
-    public CommentedCommentDTO commentComment(@RequestBody CreateCommentDTO dto, @PathVariable long commentId, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return commentService.commentComment(userId, dto, commentId);
+    public CommentedCommentDTO commentComment(@RequestBody CreateCommentDTO dto, @PathVariable long cid, HttpServletRequest req) {
+        long uid = getLoggedUserId(req);
+        return commentService.commentComment(uid, dto, cid);
     }
 
     @PutMapping("/soundcloud/{songId}/{commentId}")
-    public ResponseCommentDTO editComment(@RequestBody CreateCommentDTO dto, @PathVariable long songId, HttpServletRequest req, @PathVariable long commentId) {
-        long userId = getLoggedUserId(req);
-        return commentService.editComment(songId, userId, dto, commentId);
+    public ResponseCommentDTO editComment(@RequestBody CreateCommentDTO dto, @PathVariable long sid, HttpServletRequest req, @PathVariable long cid) {
+        long uid = getLoggedUserId(req);
+        return commentService.editComment(sid, uid, dto, cid);
     }
+    //TODO song e izlishno
 
     @DeleteMapping("/soundcloud/{songId}/{commentId}")
-    public String deleteComment(@PathVariable long songId, HttpServletRequest req, @PathVariable long commentId) {
-        long userId = getLoggedUserId(req);
-        return commentService.deleteComment(songId, userId, commentId);
+    public String deleteComment(@PathVariable long sid, HttpServletRequest req, @PathVariable long cid) {
+        long uid = getLoggedUserId(req);
+        return commentService.deleteComment(sid, uid, cid);
     }
 
     @GetMapping("/soundcloud/{songId}")
-    public List<CommentWithoutSong> getSongComments(@PathVariable long songId) {
-        return commentService.getSongComments(songId);
+    public List<CommentWithoutSong> getSongComments(@PathVariable long sid) {
+        return commentService.getSongComments(sid);
     }
 
     @PostMapping("/soundcloud/{cid}/like")
@@ -48,6 +49,8 @@ public class CommentController extends GlobalController {
         long uid = getLoggedUserId(request);
         return commentService.like(cid, uid);
     }
+
+    //TODO like/dislike - tranzakcii?
 
     @PostMapping("/soundcloud/{cid}/dislike")
     public DislikeDTO dislike(@PathVariable long cid, HttpServletRequest request) {

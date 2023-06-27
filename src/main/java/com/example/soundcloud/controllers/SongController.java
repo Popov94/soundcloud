@@ -82,19 +82,19 @@ public class SongController extends GlobalController {
 
     @PutMapping("/songs/{sid}")
     public ResponseGetSongInfoDTO editInfo(@PathVariable long sid, @RequestBody RequestSongEditDTO dto, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return songService.editSong(dto, userId, sid);
+        long uid = getLoggedUserId(req);
+        return songService.editSong(dto, uid, sid);
     }
 
     @PutMapping("/songs/{sid}/play")
     public void playSong(@PathVariable long sid, HttpServletRequest request, HttpServletResponse response) {
 
         HttpSession session = request.getSession();
-        long userId = 0;
+        long uid = 0;
         if (session.getAttribute(LOGGED)!= null){
-            userId = (long) session.getAttribute(USER_ID);
+            uid = (long) session.getAttribute(USER_ID);
         }
-        songService.play(sid, userId, response);
+        songService.play(sid, uid, response);
     }
 
     @GetMapping("/songs/feed/top_genre_for_user/{page}")
@@ -110,7 +110,7 @@ public class SongController extends GlobalController {
 
     @GetMapping("/songs/feed/top_listened/{page}")
     public List<ResponseSongFilterDTO> topTenListened(@PathVariable int page) throws SQLException {
-        return songService.topListened( page);
+        return songService.topListened(page);
     }
 
     @GetMapping("/songs/search/{offset}/{pageSize}/{sortedBy}")

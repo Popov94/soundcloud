@@ -1,6 +1,10 @@
 package com.example.soundcloud;
 
+import com.example.soundcloud.models.dto.song.ResponseGetSongInfoDTO;
+import com.example.soundcloud.models.entities.Song;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -30,6 +34,22 @@ public class SoundCloudApplication {
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();
+    }
+
+    @Bean
+    public ModelMapper songModelMapper() {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        modelMapper.typeMap(Song.class, ResponseGetSongInfoDTO.class)
+                .addMappings(new PropertyMap<Song, ResponseGetSongInfoDTO>() {
+                    @Override
+                    protected void configure() {
+                        using(new LikesListToLikesCountConverter()).map(source.getLikers(), destination.getLikes());
+                        using(new LikesListToLikesCountConverter()).map(source.getDislikers(), destination.getDislikes());
+                        using(new LikesListToLikesCountConverter()).map(source.getCommenters(), destination.getComments());
+                    }
+                });
+        return modelMapper;
     }
 
     @Bean

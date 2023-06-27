@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AmazonConfiguration {
-    @Value("AKIA54AWUPO3YS47GH54")
+    @Value("AKIA54AWUPO3V4RSIQNV")
     String accessKey;
-    @Value("y6nyb3dh4MyhrEk11OGCYNEQVEv772dbJc59tzTm")
+    @Value("bwXVx3wog2J7XN9fmT9jeZgBkWv2PsH7d8WkFYAa")
     String secretKey;
 
     @Bean

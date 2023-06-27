@@ -23,7 +23,7 @@ public class Listened {
     @MapsId("songId")
     @JoinColumn(name = "song_id")
     Song song;
-
+    @Column
     int listened;
 
 }

@@ -1,8 +1,8 @@
 cloud:
   aws:
     credentials:
-      access-key: AKIA54AWUPO3YS47GH54
-      secret-key: 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
+      access-key: AKIA54AWUPO3V4RSIQNV
+      secret-key: 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
       region:
         static: us-central-1
         auto: false
@@ -20,3 +20,20 @@ spring:
 
 server:
   port: 9999
+
+
+  spring:
+    datasource:
+      url: jdbc:mysql://localhost:3306/soundcloud
+      username: root
+      password: javadeveloper94.
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+      hibernate:
+        ddl-auto: create-drop
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+        database: mysql
+        database-platform: org.hibernate.dialect.DB2Dialect

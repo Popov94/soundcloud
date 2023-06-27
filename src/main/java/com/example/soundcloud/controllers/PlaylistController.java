@@ -35,25 +35,25 @@ public class PlaylistController extends GlobalController {
 
     @PostMapping("/playlist")
     public ResponsePLDTO createPlayList(@RequestBody CreatePlaylistDTO dto, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return playlistService.createPlayList(dto, userId);
+        long uid = getLoggedUserId(req);
+        return playlistService.createPlayList(dto, uid);
     }
 
     @DeleteMapping("playlist/{playlistId}")
     public String deletePlaylist(@PathVariable long playlistId, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return playlistService.deletePlaylist(playlistId, userId);
+        long uid = getLoggedUserId(req);
+        return playlistService.deletePlaylist(playlistId, uid);
     }
 
     @PostMapping("/playlist/{playlistId}/{songId}")
-    public ResponsePLDTO addSongInPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return playlistService.addSongInPlaylist(playlistId, songId, userId);
+    public ResponsePLDTO addSongInPlaylist(@PathVariable long playlistId, @PathVariable long sid, HttpServletRequest req) {
+        long uid = getLoggedUserId(req);
+        return playlistService.addSongInPlaylist(playlistId, sid, uid);
     }
 
     @PutMapping("/playlist/{playlistId}/{songId}")
-    public ResponsePLDTO removeSongFromPlaylist(@PathVariable long playlistId, @PathVariable long songId, HttpServletRequest req) {
-        long userId = getLoggedUserId(req);
-        return playlistService.removeSongFromPlayList(playlistId, songId, userId);
+    public ResponsePLDTO removeSongFromPlaylist(@PathVariable long playlistId, @PathVariable long sid, HttpServletRequest req) {
+        long uid = getLoggedUserId(req);
+        return playlistService.removeSongFromPlayList(playlistId, sid, uid);
     }
 }

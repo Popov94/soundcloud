@@ -255,7 +255,7 @@ public class Utility {
             if (!(dto.getText().length() > 500)) {
                 return true;
             } else {
-                throw new BadRequestException("Text can not be more then 1000 symbols!");
+                throw new BadRequestException("Text can not be more then 500 symbols!");
             }
         } else {
             throw new BadRequestException("You can not leave empty comment. You can delete it instead!");

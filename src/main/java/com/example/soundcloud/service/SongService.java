@@ -63,13 +63,21 @@ public class SongService extends AbstractService {
         this.storageClient = storageClient;
     }
 
+    public ResponseSongDTO getSongWithUserById(long sid) {
+        Song song = findSongById(sid);
+        ResponseSongDTO dto = modelMapper.map(song, ResponseSongDTO.class);
+        dto.setUploader(modelMapper.map(dto.getUploader(), UserWithoutPDTO.class));
+        return dto;
+    }
 
-    public List<ResponseGetSongDTO> searchByGenre(String genre) {
-        List<Song> songs = this.songRepository.findAllByGenre(genre);
-        if (songs.size() == 0) {
-            throw new NotFoundException("There is no musical content for genre: " + genre + ".");
-        }
-        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
+    public ResponseGetSongInfoDTO getSongInfo(long sid) {
+        Song song = findSongById(sid);
+        ResponseGetSongInfoDTO dto = modelMapper.map(song, ResponseGetSongInfoDTO.class);
+//        dto.setLikes(song.getLikers().size());
+//        dto.setDislikes(song.getDislikers().size());
+//        dto.setComments(song.getCommenters().size());
+//        return dto;
+        return songModelMapper.map(song, ResponseGetSongInfoDTO.class);
     }
 
     public List<ResponseGetSongInfoDTO> searchByUploader(long uid) {
@@ -78,13 +86,14 @@ public class SongService extends AbstractService {
         if (songs.size() == 0) {
             throw new NotFoundException("This user has not uploaded any songs!");
         }
-        List<ResponseGetSongInfoDTO> songsDTO = new ArrayList<>();
-        for (Song song : songs){
-            long sid = song.getId();
-            ResponseGetSongInfoDTO s = copySongToDTO(sid);
-            songsDTO.add(s);
-        }
-        return songsDTO;
+
+        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongInfoDTO.class)).collect(Collectors.toList());
+//        List<ResponseGetSongInfoDTO> songsDTO = new ArrayList<>();
+//        for (Song song : songs){
+//            ResponseGetSongInfoDTO s = modelMapper.map(song ,ResponseGetSongInfoDTO.class);
+//            songsDTO.add(s);
+//        }
+//        return songsDTO;
     }
 
     public List<ResponseGetSongDTO> searchLikedSongsByUser(long uid) {
@@ -96,10 +105,12 @@ public class SongService extends AbstractService {
         return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
     }
 
-    public List<ResponseGetSongDTO> searchByTitle(String title) {
-        List<Song> songs = songRepository.findSongByCharSequence(title).stream().collect(Collectors.toList());
-        List<ResponseGetSongDTO> songsDTO = songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
-        return songsDTO;
+    public List<ResponseGetSongDTO> searchByGenre(String genre) {
+        List<Song> songs = this.songRepository.findAllByGenre(genre);
+        if (songs.size() == 0) {
+            throw new NotFoundException("There is no musical content for genre: " + genre + ".");
+        }
+        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
     }
 
     public List<ResponseSongFilterDTO> filterSongs(RequestSongFilterDTO filterType) throws SQLException {
@@ -110,14 +121,14 @@ public class SongService extends AbstractService {
 
         String filterBy = filterType.getFilterBy();
         if (filterBy == null) {
-            filterBy = "likes";
+            filterBy = "likes"; // if there is not given filter it will use likes for filter by default!
         } else {
             filterBy = filterBy.toLowerCase().trim();
         }
 
         String orderBy = filterType.getOrderBy();
         if (orderBy == null) {
-            orderBy = "asc";
+            orderBy = "asc"; // if there is not given order it will use ascending order!
         } else {
             orderBy = orderBy.toLowerCase().trim();
             if (!orderBy.equals("asc") && !orderBy.equals("desc")) {
@@ -141,6 +152,13 @@ public class SongService extends AbstractService {
                 throw new BadRequestException("Invalid type of filter!");
         }
     }
+
+    public List<ResponseGetSongDTO> searchByTitle(String title) {
+        List<Song> songs = songRepository.findSongByCharSequence(title);
+        return songs.stream().map(song -> modelMapper.map(song, ResponseGetSongDTO.class)).collect(Collectors.toList());
+    }
+
+
 
     public LikeDTO like(long sid, long uid) {
         Song song = findSongById(sid);
@@ -176,12 +194,7 @@ public class SongService extends AbstractService {
         }
     }
 
-    public ResponseSongDTO getSongWithUserById(long sid) {
-        Song song = findSongById(sid);
-        ResponseSongDTO dto = modelMapper.map(song, ResponseSongDTO.class);
-        dto.setUploader(modelMapper.map(dto.getUploader(), UserWithoutPDTO.class));
-        return dto;
-    }
+
 
     @Transactional
     public ResponseSongUploadDTO uploadSong(long uid, String title, String artist, String genre,
@@ -211,6 +224,7 @@ public class SongService extends AbstractService {
             } else {
                 throw new BadRequestException("The file already exists!");
             }
+
             try {
                 this.storageClient.putObject(STORAGE_BUCKET_NAME, nameUrl, songFile.getInputStream(), metaData);
                 uploadedSong.setUploader(currentUser);
@@ -256,7 +270,7 @@ public class SongService extends AbstractService {
             if (user.getId() == song.getUploader().getId()) {
                 setSongEdit(dto, song);
                 songRepository.save(song);
-                return copySongToDTO(sid);
+                return modelMapper.map(song, ResponseGetSongInfoDTO.class);
             } else {
                 throw new MethodNotAllowedException("The song that you are trying to edit was not uploaded by you!");
             }
@@ -272,7 +286,7 @@ public class SongService extends AbstractService {
         song.setDescription(dto.getDescription());
     }
 
-
+//TODO razgledai play metoda
     @Transactional
     public void play(long sid, long userId, HttpServletResponse response) {
         Song song = findSongById(sid);
@@ -295,7 +309,7 @@ public class SongService extends AbstractService {
             if (!isHere) {
                 song.setListened(song.getListened() + 1);
                 listened.setId(listenedKey);
-                listened.setListened(listened.getListened() + 2);
+                listened.setListened(listened.getListened() + 1);
                 listenedRepository.save(listened);
                 songRepository.save(song);
             } else {
@@ -321,6 +335,27 @@ public class SongService extends AbstractService {
         }
     }
 
+    public List<ResponseSongFilterDTO> topGenreSongsForUser(long uid, int page) throws SQLException {
+        if (page <= 0) {
+            page = 1;
+        }
+        return songDAO.findSongsByGenreForUser(uid, page, SONGS_PER_PAGE);
+    }
+
+    public List<ResponseSongFilterDTO> topGenreSongs(int page) throws SQLException {
+        if (page <= 0) {
+            page = 1;
+        }
+        return songDAO.findSongsByGenre(page, SONGS_PER_PAGE);
+    }
+
+    public List<ResponseSongFilterDTO> topListened(int page) throws SQLException {
+        if (page <= 0) {
+            page = 1;
+        }
+        return songDAO.findTopListened(page, SONGS_PER_PAGE);
+    }
+
     public byte[] downloadSong(@PathVariable String songName) {
         S3Object songFile = storageClient.getObject(STORAGE_BUCKET_NAME, songName);
         S3ObjectInputStream inputStream = songFile.getObjectContent();
@@ -331,31 +366,6 @@ public class SongService extends AbstractService {
         } catch (AmazonServiceException | IOException e) {
             throw new FileException("Problem with song downloading - " + e.getMessage());
         }
-    }
-
-
-    public ResponseGetSongInfoDTO getSongInfo(long sid) {
-        return copySongToDTO(sid);
-    }
-
-    public ResponseGetSongInfoDTO copySongToDTO(long sid){
-        Song song = findSongById(sid);
-        String title = song.getTitle();
-        String genre = song.getGenre();
-        String artist = song.getArtist();
-        String url = song.getUrl();
-        String description = song.getDescription();
-        LocalDateTime createdAt = song.getCreatedAt();
-        long id = song.getId();
-        int likes = song.getLikers().size();
-        int dislikes = song.getDislikers().size();
-        int comments = song.getComments().size();
-        int listened = song.getListened();
-        User user = song.getUploader();
-        UserInfoDTO user1 = modelMapper.map(user, UserInfoDTO.class);
-        ResponseGetSongInfoDTO dto = new ResponseGetSongInfoDTO(id, title, genre, artist, url, createdAt, listened,
-                description, user1, likes, dislikes, comments);
-        return dto;
     }
 
     public Page<ResponseSongDTO> sortSongWithPagination(int offset, int pageSize, String sortedBy) {
@@ -379,26 +389,5 @@ public class SongService extends AbstractService {
                     .map(song -> modelMapper.map(song, ResponseSongDTO.class));
             return dto;
         }
-    }
-
-    public List<ResponseSongFilterDTO> topGenreSongsForUser(long uid, int page) throws SQLException {
-        if (page <= 0) {
-            page = 1;
-        }
-        return songDAO.findSongsByGenreForUser(uid, page, SONGS_PER_PAGE);
-    }
-
-    public List<ResponseSongFilterDTO> topGenreSongs(int page) throws SQLException {
-        if (page <= 0) {
-            page = 1;
-        }
-        return songDAO.findSongsByGenre(page, SONGS_PER_PAGE);
-    }
-
-    public List<ResponseSongFilterDTO> topListened(int page) throws SQLException {
-        if (page <= 0) {
-            page = 1;
-        }
-        return songDAO.findTopListened(page, SONGS_PER_PAGE);
     }
 }

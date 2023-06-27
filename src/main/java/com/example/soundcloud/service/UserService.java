@@ -38,12 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
-
 public class UserService extends AbstractService {
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-
-
 
     private boolean ckeckLog = true;
     private AtomicInteger countFailedLo = new AtomicInteger(0);
@@ -344,7 +341,7 @@ public class UserService extends AbstractService {
     public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSorting(int offset, int pageSize, String sortedBy) {
         Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize).
                         withSort(Sort.by(sortedBy))).
-                map(user -> modelMapper.map(user, UserWithoutPDTO.class));
+                        map(user -> modelMapper.map(user, UserWithoutPDTO.class));
         return users;
 
     }
@@ -352,9 +349,8 @@ public class UserService extends AbstractService {
     public Page<UserWithoutPDTO> findAllUsersWithPaginationAndSortingDesc(int offset, int pageSize, String sortedBy) {
         Page<UserWithoutPDTO> users = userRepository.findAll(PageRequest.of(offset, pageSize).
                         withSort(Sort.by(sortedBy).descending())).
-                map(user -> modelMapper.map(user, UserWithoutPDTO.class));
+                        map(user -> modelMapper.map(user, UserWithoutPDTO.class));
         return users;
-
     }
 
     public HashMap<String, List<ResponseSongDTO>> homePageForLogged(long userId) {
@@ -413,7 +409,8 @@ public class UserService extends AbstractService {
             if (bCryptPasswordEncoder.matches(dto.getPassword(), user.getPassword())) {
                 return true;
             }
-        } return false;
+        }
+        return false;
     }
 
     public String forgotPassword(UserInfoDTO dto, String URL) {
@@ -427,7 +424,6 @@ public class UserService extends AbstractService {
             sendEmailForNewPassword(user1,URL);
             return "We've sent instructions how to change your password at your email.";
         } throw  new NotFoundException("User does not exist!");
-
     }
 
 

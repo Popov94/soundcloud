@@ -71,6 +71,7 @@ public class PlaylistService extends AbstractService {
         return dto;
     }
 
+    //TODO check if foreach is the same as contains
     @Transactional
     public String deletePlaylist(long playlistId, long userId) {
         User owner = findUserById(userId);
@@ -136,3 +137,4 @@ public class PlaylistService extends AbstractService {
         return dtoPL;
     }
 }
+//TODO Da promenq duljinata na redovete!

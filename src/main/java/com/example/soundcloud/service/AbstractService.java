@@ -24,6 +24,9 @@ public class AbstractService {
     protected UserRepository userRepository;
     @Autowired
     protected ModelMapper modelMapper;
+
+    @Autowired
+    protected ModelMapper songModelMapper;
     @Autowired
     protected PlaylistRepository playlistRepository;
     @Autowired
@@ -58,7 +61,7 @@ public class AbstractService {
             sendEmailForNewUpload(u, song);
         }
     }
-
+//TODO da premestq dvata metoda v songService
     private void sendEmailForNewUpload(User user, Song song) {
         new Thread(() -> {
             try {
@@ -68,7 +71,7 @@ public class AbstractService {
                 String senderName = "Sound Cloud";
                 String subject = user.getUsername() + " has uploaded new track. Check it out!";
                 String content = "Dear [[name]],<br>"
-                        + user.getUsername() + " has umploead new track. U can listen it up on the link bellow:<br>"
+                        + user.getUsername() + " has upload new track. U can listen it up on the link bellow:<br>"
                         + "<h3><a href=\"[[URL]]\" target=\"_self\">CLICK HERE</a></h3>"
                         + "Hope you're having great time in Sound Cloud," +
                         "Sound Cloud";
